@@ -1,5 +1,18 @@
 import React from 'react';
-import './MainFrame.css';
+
+import { BsList } from 'react-icons/bs';
+
+import Spinner from 'react-bootstrap/Spinner'
+import Toast from 'react-bootstrap/Toast'
+
+import { isvalid, readTextFile} from '../common/tool.js';
+
+import { srtTool } from '../common/srtTool.js';
+
+import { MovieSelector } from '../view/MovieSelector.js';
+import { MovieLooper } from '../view/MovieLooper.js';
+
+import './styles.scss';
 
 
 
@@ -8,31 +21,81 @@ class MainFrame extends React.Component {
     super(props);
 
     this.state = {
-      videoSource: ''
+      pageType: 'select',
+      scriptFile: null,
+      scriptData: [],
+      videoURL: '',
+      videoFile: null,
+      message: null,
+      waiting: false
     };
   }
 
-  onVideoChanged = (ev) => {
-    const $this = ev.target;
-    const files = $this.files;
+  componentDidMount() {
+    //
+  }
 
-    console.log('onVideoChanged', $this, files, files[0], URL.createObjectURL(files[0]));
+  hideToastShow = () => {
+    this.setState({ message: null });
+  }
+
+  showToastMessage = (msg) => {
+    // console.log('showInstanceMessage', msg);
+    this.setState({ waiting: false, message: msg });
+  }
+
+  handleStart = (vf, sf) => {
+    // console.log(vf, JSON.stringify(vf)); 
     
-    this.setState({ videoSource: URL.createObjectURL(files[0]) });
+    this.setState({ waiting: true });
+
+    const scriptURL = URL.createObjectURL(sf);
+
+    readTextFile(scriptURL, (text) => {
+      this.setState({
+        waiting: false,
+        pageType: 'study',
+        videoFile: vf,
+        scriptFile: sf,
+        scriptData: srtTool.convert(text.split('\n'))
+      });
+    });
   }
 
   render() {
-    const { videoSource } = this.state;
+    const { pageType, videoFile, scriptFile, scriptData, waiting, message } = this.state;
+
+    const toastOn = isvalid(message);
 
   	return (
-  		<div className="MainView">
-        <div>
-          <input type="file" accept="video/*" onChange={this.onVideoChanged} />
+  		<div className="MainWrap">
+        <div className="MainHeader">
+          { <div className="MainMenuButton" onClick={this.handleMenu}><BsList size="28" color="#ffffff" /></div> }
+          <div className="MainTitle">{'Movie Looper'}</div>
         </div>
-        <div className="MovieBox">
-          <video width="810" src={videoSource} controls autoPlay />
-          <div className="MovieOverlay">TEST MESSAGE</div>
+
+        <div className="MainScrollLocked">
+          <div className="MainBody">
+            { pageType === 'select' && <MovieSelector videoFile={videoFile} scriptFile={scriptFile} onGo={this.handleStart} /> }
+            { pageType === 'study'  && <MovieLooper videoFile={videoFile} scriptData={scriptData} /> }
+          </div>
         </div>
+
+        { waiting &&
+          <div className="BlockedLayer">
+            <Spinner className="SpinnerBox" animation="border" variant="primary" />
+          </div>
+        }
+        { toastOn &&
+          <div className="BlockedLayer" onClick={this.hideToastShow}>
+            <Toast className="ToastBox" onClose={this.hideToastShow} show={toastOn} delay={3000} autohide animation>
+              <Toast.Header>
+                <strong className="mr-auto">Message</strong>
+              </Toast.Header>
+              <Toast.Body>{message}</Toast.Body>
+            </Toast>
+          </div>
+        }
   		</div>
   	);
   }
