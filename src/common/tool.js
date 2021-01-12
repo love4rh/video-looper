@@ -154,93 +154,6 @@ exports.makeid = function(digitNum) {
 }
 
 
-// 1: true, false
-// 2: numeric 0, 1
-// 3: "true", "false"
-// 4: "0", "1"
-// 5: "on", "off"
-// 6: "ON", "OFF"
-exports.BoolTool = {
-	checkType: function(val) {
-		switch( typeof val ) {
-			case 'boolean':
-				return 1;
-			case 'number':
-				return 2;
-			default:
-				if (val === 'true' || val === 'false') {
-					return 3;
-				} else if (val === '0' || val === '1') {
-					return 4;
-				} else if (val === 'on' || val === 'off') {
-					return 5;
-				} else if (val === 'ON' || val === 'OFF') {
-					return 6;
-				}
-		}
-
-		return 1;
-	},
-
-	boolValue: function(value, type) {
-		switch( type ) {
-			case 2:
-				return value !== 0;
-
-			case 3: // fall-throught
-			case 4: // fall-throught
-			case 5: // fall-throught
-			case 6: // fall-throught
-				return value === '1' || value === 'true' || value === 'on' || value === 'ON';
-
-			case 1: // fall-throught
-			default: // fall-throught
-				break;
-		}
-
-		return value;
-	},
-
-	originalValue: function(boolVal, type) {
-		switch (type) {
-			case 2:
-				return boolVal ? 1 : 0;
-			case 3:
-				return boolVal ? 'true' : 'false';
-			case 4:
-				return boolVal ? '1' : '0';
-			case 5:
-				return boolVal ? 'on' : 'off';
-			case 6:
-				return boolVal ? 'ON' : 'OFF';
-			default:
-				break;
-		}
-
-		return boolVal;
-	},
-
-	anotherOriginal: function(boolVal, type) {
-		switch (type) {
-			case 2:
-				return boolVal ? 0 : 1;
-			case 3:
-				return boolVal ? 'false' : 'true';
-			case 4:
-				return boolVal ? '0' : '1';
-			case 5:
-				return boolVal ? 'off' : 'on';
-			case 6:
-				return boolVal ? 'OFF' : 'ON';
-			default:
-				break;
-		}
-
-		return !boolVal;
-	}
-};
-
-
 exports.isInteger = function (value) {
   return (typeof value === 'number'
     && isFinite(value)
@@ -291,6 +204,12 @@ exports.readTextFile = function(file, cb) {
   rawFile.send(null);
 }
 
+
+exports.removeTags = (html) => {
+	let div = document.createElement('div');
+	div.innerHTML = html;
+	return div.textContent || div.innerText || '';
+}
 
 
 var _logger_ = null;

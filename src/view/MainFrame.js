@@ -59,7 +59,7 @@ class MainFrame extends React.Component {
         pageType: 'study',
         videoFile: vf,
         scriptFile: sf,
-        scriptData: getScriptMock() // srtTool.convert(text.split('\n'))
+        scriptData: srtTool.convert(text.split('\n')) // getScriptMock()
       });
     });
   }

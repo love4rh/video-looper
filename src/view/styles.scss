@@ -1,6 +1,8 @@
 $headerHeight: 54px;
 $bodyHeight: calc(100vh - 54px);
 $bgcolor: #282923;
+$controlButtonSize: 36px;
+
 
 .MainWrap {
   min-height: 100vh;
@@ -118,7 +120,7 @@ $bgcolor: #282923;
 
 .MovieAreaVertical {
 	text-align: center;
-	flex-basis: 60vh;
+	// flex-basis: 60vh;
 }
 
 .MovieAreaHorizontal {
@@ -135,15 +137,40 @@ $bgcolor: #282923;
 }
 
 .ControlArea {
-	flex-basis: 56px;
-	background-color: blue;
+	flex-basis: 59px;
+	background-color: #42433e;
+	padding-top: 9px;
+	padding-left: 7px;
+	padding-right: 7px;
+}
+
+.ControlButton {
+	display: inline-block;
+	margin: 2px;
+	text-align: center;
+	line-height: 28px;
+	width: $controlButtonSize;
+	height: $controlButtonSize;
+	color: #b0b1ab;
+	border: 1px solid #b0b1ab;
+	border-radius: 5px;
+}
+
+.ControlButton:hover {
+	color: #f8f8f2;
+	border-color: #f8f8f2;
 }
 
 .ScriptArea {
 	color: white;
-	background-color: red;
 	flex: 1 1;
 	overflow: hidden;
+	padding: 5px;
+}
+
+.ScriptScroll {
+	height: 100%;
+	overflow-y: auto;
 }
 
 .MovieOverlay {
@@ -153,14 +180,41 @@ $bgcolor: #282923;
 	top: -220px;
 }
 
-
 .ScriptItem {
-	height: 1.2rem;
+	height: 32px;
+	line-height: 32px;
 	color: white;
 	cursor: pointer;
 	background-color: #282923;
+	padding: 0 5px;
+	overflow: hidden;
+	display: flex;
+	flex-flow: row nowrap;
 }
 
 .ScriptItem:hover {
-	background-color: #20303d;
+	background-color: #30505d;
+}
+
+.ScriptSelected {
+	background-color: #30505d;
+}
+
+.ScriptText {
+	flex: 1 1;
+	height: 32px;
+	overflow: hidden;
+}
+
+.ScriptButton {
+	flex-basis: 32px;
+	margin: 2px;
+	text-align: center;
+	line-height: 24px;
+	color: #b0b1ab;
+}
+
+.ScriptButton:hover {
+	color: #f8f8f2;
+	border-color: #f8f8f2;
 }

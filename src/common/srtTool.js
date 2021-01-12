@@ -1,3 +1,5 @@
+import { removeTags } from '../common/tool.js';
+
 
 const srtTool = {
 	isNewItem: (s, idx) => {
@@ -35,16 +37,23 @@ const srtTool = {
 				item.start = srtTool.parseTime(s, 0);
 				item.end = srtTool.parseTime(s, 17);
 			} else if( s === '' && item !== null ) {
+				item.text = removeTags(item.text);
 				ar.push(item);
 				item = null;
 			} else if( item !== null ) {
 				if( s === '' ) {
+					item.text = removeTags(item.text);
 					ar.push(item);
 					item = null;
 				} else {
 					item.text += (item.text.length > 0 ? ' ' : '') + s;
 				}
 			}
+		}
+
+		if( item !== null ) {
+			item.text = removeTags(item.text);
+			ar.push(item);
 		}
 
 		// console.log(ar);
