@@ -1,10 +1,11 @@
 $headerHeight: 54px;
 $bodyHeight: calc(100vh - 54px);
-
+$bgcolor: #282923;
 
 .MainWrap {
   min-height: 100vh;
-  min-width: 100vw;
+	min-width: 100vw;
+	outline: none;
 }
 
 .MainHeader {
@@ -44,7 +45,7 @@ $bodyHeight: calc(100vh - 54px);
 
 .MainBody {
 	min-height: $bodyHeight;
-	background-color: #394b59;
+	background-color: $bgcolor;
 }
 
 .BlockedLayer {
@@ -109,32 +110,57 @@ $bodyHeight: calc(100vh - 54px);
 // -----------------------------------------------------------------------------
 
 .MovieViewBox {
-	//
+	width: 100%;
+	height: $bodyHeight;
+	display: flex;
+	flex-flow: column nowrap;
 }
 
-.MovieArea {
-
+.MovieAreaVertical {
+	text-align: center;
+	flex-basis: 60vh;
 }
 
-.ScriptArea {
-
+.MovieAreaHorizontal {
+	text-align: center;
+	flex-basis: 40vh;
 }
 
-.MovieBox {
-	max-height: 840px;
-	max-width: 840px;
-}
 
 .MovieDiv {
 	padding: 10px;
-	max-width: 100%;
+  max-width: 90vw;
+	max-height: 70vh;
+	outline: none;
 }
 
+.ControlArea {
+	flex-basis: 56px;
+	background-color: blue;
+}
+
+.ScriptArea {
+	color: white;
+	background-color: red;
+	flex: 1 1;
+	overflow: hidden;
+}
 
 .MovieOverlay {
 	color: red;
 	position: relative;
-  left: 0px;
-  top: -220px;
+	left: 0px;
+	top: -220px;
 }
 
+
+.ScriptItem {
+	height: 1.2rem;
+	color: white;
+	cursor: pointer;
+	background-color: #282923;
+}
+
+.ScriptItem:hover {
+	background-color: #20303d;
+}

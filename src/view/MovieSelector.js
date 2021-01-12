@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { isundef, readTextFile} from '../common/tool.js';
+import { isundef } from '../common/tool.js';
 
-import InputGroup from 'react-bootstrap/InputGroup'
 import Button from 'react-bootstrap/Button';
-
 import Form from 'react-bootstrap/Form';
 
 import './styles.scss';

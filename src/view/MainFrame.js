@@ -5,12 +5,14 @@ import { BsList } from 'react-icons/bs';
 import Spinner from 'react-bootstrap/Spinner'
 import Toast from 'react-bootstrap/Toast'
 
-import { isvalid, readTextFile} from '../common/tool.js';
+import { isvalid, readTextFile } from '../common/tool.js';
 
 import { srtTool } from '../common/srtTool.js';
 
 import { MovieSelector } from '../view/MovieSelector.js';
 import { MovieLooper } from '../view/MovieLooper.js';
+
+import { getScriptMock } from '../mock/scriptMock.js';
 
 import './styles.scss';
 
@@ -21,7 +23,7 @@ class MainFrame extends React.Component {
     super(props);
 
     this.state = {
-      pageType: 'select',
+      pageType: 'select', // select, study
       scriptFile: null,
       scriptData: [],
       videoURL: '',
@@ -57,7 +59,7 @@ class MainFrame extends React.Component {
         pageType: 'study',
         videoFile: vf,
         scriptFile: sf,
-        scriptData: srtTool.convert(text.split('\n'))
+        scriptData: getScriptMock() // srtTool.convert(text.split('\n'))
       });
     });
   }

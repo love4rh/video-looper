@@ -12,7 +12,7 @@ https://medium.com/@jsh901220/react%EC%97%90-scss-%EC%A0%81%EC%9A%A9%EB%B0%8F-%E
 
 ## video tag properies
 currentTime (get/set)
-
+event & attributes: https://www.w3schools.com/tags/ref_eventattributes.asp
 
 ## 로컬 디스크 내 비디오 재생
 https://stackoverflow.com/questions/8885701/play-local-hard-drive-video-file-with-html5-video-tag
