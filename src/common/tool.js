@@ -212,6 +212,28 @@ exports.removeTags = (html) => {
 }
 
 
+const pad = (n) => {
+	return n < 10 ? '0' + n : '' + n;
+}
+
+exports.pad = pad;
+
+const pad2 = (n) => {
+	return n < 10 ? '00' + n : (n < 100 ? '0' + n : '' + n);
+}
+
+// 65.123 --> 00:01:05.123
+exports.secToTime = (sec) => {
+	const h = Math.floor(sec / 3600);
+	sec -= h * 3600;
+	const m = Math.floor(sec / 60);
+	sec -= m * 60;
+	const s = Math.floor(sec);
+	sec -= s; // sec maybe 0.123
+
+	return pad(h) + ':' + pad(m) + ':' + pad(s) + '.' + pad2(Math.floor(sec * 1000));
+}
+
 var _logger_ = null;
 
 exports.setLogger = function(logger) {

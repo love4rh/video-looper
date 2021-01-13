@@ -55,10 +55,10 @@ class ScriptItem extends Component {
 
     return (
       <div className={ cn({ 'ScriptItem':true, 'ScriptSelected':selected }) }>
+        <div className="ScriptButton" onClick={this.toggleHide}>{textShown ? <RiEyeOffLine /> : <RiEyeLine />}</div>
 				<div className="ScriptText" onClick={this.handleClick}>
           {'[' + (index + 1) + '] '} {textShown ? data.text : '...'}
         </div>
-        <div className="ScriptButton" onClick={this.toggleHide}>{textShown ? <RiEyeOffLine /> : <RiEyeLine />}</div>
 			</div>
     );
   }

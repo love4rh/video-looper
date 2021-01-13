@@ -144,6 +144,24 @@ $controlButtonSize: 36px;
 	padding-right: 7px;
 }
 
+.ControlSeparator {
+	display: inline-block;
+	position: relative;
+	top: -3px;
+	margin: 0 7px;
+	background-color: #b0b1ab;
+	width: 1px;
+	height: 36px;
+}
+
+.PlayingTime {
+	display: inline-block;
+	position: relative;
+	top: 3px;
+	margin: 0 5px;
+	color: #b0b1ab;
+}
+
 .ControlButton {
 	display: inline-block;
 	margin: 2px;
@@ -159,6 +177,11 @@ $controlButtonSize: 36px;
 .ControlButton:hover {
 	color: #f8f8f2;
 	border-color: #f8f8f2;
+}
+
+.ControlItem {
+	display: inline-block;
+	margin: 2px;
 }
 
 .ScriptArea {
@@ -181,7 +204,7 @@ $controlButtonSize: 36px;
 }
 
 .ScriptItem {
-	height: 32px;
+	height: 32px; // MovieLooper.js에서 scrollTop 조절하는 부분과 값이 같아야 함.
 	line-height: 32px;
 	color: white;
 	cursor: pointer;
@@ -203,12 +226,13 @@ $controlButtonSize: 36px;
 .ScriptText {
 	flex: 1 1;
 	height: 32px;
+	line-height: 28px;
 	overflow: hidden;
 }
 
 .ScriptButton {
 	flex-basis: 32px;
-	margin: 2px;
+	padding: 2px 0;
 	text-align: center;
 	line-height: 24px;
 	color: #b0b1ab;
@@ -217,4 +241,19 @@ $controlButtonSize: 36px;
 .ScriptButton:hover {
 	color: #f8f8f2;
 	border-color: #f8f8f2;
+}
+
+.VolumeAdjust {
+	position: relative;
+	top: 4px;
+	display: flex;
+	flex-direction: row nowrap;
+}
+
+.VolumeTitle {
+	flex-basis: 100px;
+}
+
+.VolumeBar {
+	flex-basis: 150px;
 }
