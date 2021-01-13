@@ -1,10 +1,14 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiRepeatLine, RiLockLine, RiLockUnlockLine } from 'react-icons/ri';
-import { CgPushRight } from 'react-icons/cg';
+import {
+  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiRepeatLine,
+  RiLockLine, RiLockUnlockLine, RiArrowDownLine, RiArrowUpLine
+} from 'react-icons/ri';
 
-import { isundef, isvalid, istrue, secToTime } from '../common/tool.js';
+import { CgPushRight, CgArrowLongRightL } from 'react-icons/cg';
+
+import { isundef, isvalid, istrue, secToTime, nvl } from '../common/tool.js';
 
 // import { TooltipEx } from '../view/TooltipEx.js';
 import { ScriptItem } from '../view/ScriptItem.js';
@@ -39,7 +43,7 @@ class MovieLooper extends Component {
       duration: '00:00:00.000', // 동영상 전체 시간
       volume: 100,
       playing: { running: false }, // 현재 실행 정보
-      options: { repeatCount: 2, pauseRepeat: false, scrollLock: false, showScript: false }
+      options: { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false }
     };
 
     this._videoDiv = React.createRef();
@@ -49,12 +53,12 @@ class MovieLooper extends Component {
   }
 
   componentDidMount () {
-    // const v = this._videoDiv   .current;
-    // console.log('DidMount', v.videoHeight, v.videoWidth);
+    document.addEventListener('keydown', this.handleKeyDown);
   }
 
   componentWillUnmount () {
     this.clearChecker();
+    document.removeEventListener('keydown', this.handleKeyDown);
   }
 
   clearChecker = () => {
@@ -157,12 +161,16 @@ class MovieLooper extends Component {
     this.clearChecker();
   }
 
-  handleVolumeChange = (value) => {
+  handleVolumeChange = (type, value) => {
     const v = this._videoDiv.current;
 
-    v.volume = value / 100.0;
-
-    this.setState({ volume: value });
+    if( 'updown' === type ) {
+      v.volume = value / 100.0;
+      v.muted = false;
+      this.setState({ volume: value });
+    } else {
+      v.muted = true;
+    }
   }
 
   onControl = (type) => () => {
@@ -172,7 +180,7 @@ class MovieLooper extends Component {
     const v = this._videoDiv.current;
 
     if( type === 'play/pause' ) {
-      type = playing.running ? 'pause' : 'play';
+      type = istrue(playing.running) ? 'pause' : 'play';
     }
 
     // console.log('onControl', type, JSON.stringify(playing));
@@ -209,6 +217,58 @@ class MovieLooper extends Component {
         this.setState({ options: options });
         break;
 
+      case 'r-up':
+        options.repeatCount = Math.min(repeatCount + 1, 20);
+        this.setState({ options: options });
+        break;
+
+      case 'r-down':
+        options.repeatCount = Math.max(repeatCount - 1, 1);
+        this.setState({ options: options });
+        break;
+
+      default:
+        break;
+    }
+  }
+
+  handleKeyDown = (ev) => {
+    const { playing, scriptData, volume } = this.state;
+    const { keyCode, shiftKey } = ev;
+
+    // console.log('KeyDown', keyCode, ctrlKey, shiftKey);
+
+    switch( keyCode ) {
+      case 32: // space-bar --> play/pause
+        this.onControl('play/pause')();
+        break;
+
+      case 37: // left --> previous script
+        this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+        break;
+
+      case 39: // right --> next script
+        this.procScriptLooping( isundef(playing.index) ? 0 : Math.min(scriptData.length - 1, playing.index + 1) );
+        break;
+
+      case 38: // up
+        if( shiftKey ) {
+          // increase repeat count
+        } else {
+          // volume up
+          this.handleVolumeChange( 'updown', Math.min(volume + 5, 100) );
+        }
+        break;
+
+      case 40: // down
+        if( shiftKey ) {
+          // decrease repeat count
+        } else {
+          // volume down
+          this.handleVolumeChange( 'updown', Math.max(volume - 5, 0) );
+        }
+        break;
+
       default:
         break;
     }
@@ -216,7 +276,7 @@ class MovieLooper extends Component {
 
   render() {
     const { videoURL, resolution, scriptData, playing, options, currentTime, duration, volume } = this.state;
-    const { showScript, scrollLock, pauseRepeat } = options;
+    const { showScript, scrollLock, pauseRepeat, repeatCount } = options;
 
     return (
       <div className="MovieViewBox">
@@ -230,19 +290,32 @@ class MovieLooper extends Component {
           />
         </div>
         <div className="ControlArea">
-          <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>
+          <div className="RepeatIcon">
+            <div className="ButtonAdjust"><RiRepeatLine size="16" /></div>
+            </div>
+          <div className="RepeatBox">
+            <div className="ButtonAdjust">{repeatCount}</div>
+          </div>
+          <div className="ControlButton" onClick={this.onControl('r-up')}>
+            <RiArrowUpLine className="ButtonAdjust" size="18" />
+          </div>
+          <div className="ControlButton" onClick={this.onControl('r-down')}>
+            <RiArrowDownLine className="ButtonAdjust" size="18" />
+          </div>
+          <div className="ControlSeparator">&nbsp;</div>
+          <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration} (${nvl(playing.count, -1) + 1}/${repeatCount})`}</div>
           <div className="ControlSeparator">&nbsp;</div>
           <div className="ControlButton" onClick={this.onControl('play/pause')}>
-            { playing.running ? <RiPauseFill size="16" /> : <RiPlayFill size="18" /> }
+            { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }
           </div>
           <div className="ControlButton" onClick={this.onControl('show')}>
-            { showScript ? <RiEyeOffLine size="16" /> : <RiEyeLine size="16" /> }
+            { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
           </div>
           <div className="ControlButton" onClick={this.onControl('scroll')}>
-            { scrollLock ? <RiLockLine size="16" /> : <RiLockUnlockLine size="16" /> }
+            { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
           </div>
           <div className="ControlButton" onClick={this.onControl('repeat')}>
-            { pauseRepeat ? <CgPushRight size="16" /> : <RiRepeatLine size="16" /> }
+            { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
           </div>
           <div className="ControlSeparator">&nbsp;</div>
           <div className="ControlItem">

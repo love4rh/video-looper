@@ -160,6 +160,8 @@ $controlButtonSize: 36px;
 	top: 3px;
 	margin: 0 5px;
 	color: #b0b1ab;
+	text-align: center;
+	width: 280px;
 }
 
 .ControlButton {
@@ -182,6 +184,36 @@ $controlButtonSize: 36px;
 .ControlItem {
 	display: inline-block;
 	margin: 2px;
+}
+
+.ButtonAdjust {
+	position: relative;
+	top: 2px;
+}
+
+.RepeatIcon {
+	display: inline-block;
+	margin: 2px 0 2px 2px;
+	text-align: center;
+	line-height: 28px;
+	width: $controlButtonSize;
+	height: $controlButtonSize;
+	border: 1px solid #b0b1ab;
+	border-radius: 5px 0 0 5px;
+	background-color: #b0b1ab;
+	color: #42433e;
+}
+
+.RepeatBox {
+	display: inline-block;
+	margin: 2px 2px 2px 0;
+	text-align: center;
+	line-height: 28px;
+	width: 48px;
+	height: $controlButtonSize;
+	color: #b0b1ab;
+	border: 1px solid #b0b1ab;
+	border-radius: 0 5px 5px 0;
 }
 
 .ScriptArea {
@@ -226,7 +258,7 @@ $controlButtonSize: 36px;
 .ScriptText {
 	flex: 1 1;
 	height: 32px;
-	line-height: 28px;
+	line-height: 30px;
 	overflow: hidden;
 }
 
@@ -244,16 +276,30 @@ $controlButtonSize: 36px;
 }
 
 .VolumeAdjust {
-	position: relative;
-	top: 4px;
 	display: flex;
 	flex-direction: row nowrap;
 }
 
-.VolumeTitle {
-	flex-basis: 100px;
+.VolumelButton {
+	flex-basis: $controlButtonSize;
+	margin: 2px;
+	text-align: center;
+	line-height: 28px;
+	width: $controlButtonSize;
+	height: $controlButtonSize;
+	color: #b0b1ab;
+	border: 1px solid #b0b1ab;
+	border-radius: 5px;
+}
+
+.VolumelButton:hover {
+	color: #f8f8f2;
+	border-color: #f8f8f2;
 }
 
 .VolumeBar {
-	flex-basis: 150px;
+	position: relative;
+	top: 7px;
+	left: 3px;
+	flex-basis: 100px;
 }
