@@ -10,6 +10,9 @@ import { CgPushRight, CgArrowLongRightL } from 'react-icons/cg';
 
 import { isundef, isvalid, istrue, secToTime, nvl } from '../common/tool.js';
 
+import Tooltip from 'react-bootstrap/Tooltip';
+import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
+
 // import { TooltipEx } from '../view/TooltipEx.js';
 import { ScriptItem } from '../view/ScriptItem.js';
 import { VolumeControl } from '../view/VolumeControl.js';
@@ -17,17 +20,28 @@ import { VolumeControl } from '../view/VolumeControl.js';
 import './styles.scss';
 
 
+const attachTooltip = (tooltip, tag) => {
+  return (
+    <OverlayTrigger
+      placement="top"
+      overlay={<Tooltip>{tooltip}</Tooltip>}
+    >
+      {tag}
+    </OverlayTrigger>
+  );
+}
+
 
 class MovieLooper extends Component {
   static propTypes = {
     scriptData: PropTypes.array,
-    videoFile: PropTypes.object
+    videoURL: PropTypes.string
   }
 
   constructor (props) {
     super(props);
 
-    const { scriptData, videoFile } = this.props;
+    const { scriptData, videoURL } = this.props;
 
     const saved = localStorage.getItem('playingOption');
 
@@ -39,8 +53,7 @@ class MovieLooper extends Component {
       : JSON.parse(saved);
 
     this.state = {
-      videoFile,
-      videoURL: isundef(videoFile) ? '' : URL.createObjectURL(videoFile),
+      videoURL: videoURL,
       scriptData,
       resolution: { width: 0, height: 0 },
       currentTime: 0, // 현재 재생 중인 동영상 위치 (초)
@@ -304,39 +317,67 @@ class MovieLooper extends Component {
           />
         </div>
         <div className="ControlArea">
+
           <div className="RepeatIcon">
             <div className="ButtonAdjust"><RiRepeatLine size="16" /></div>
+          </div>
+          { attachTooltip('반복회수',
+            <div className="RepeatBox">
+              <div className="ButtonAdjust">{repeatCount}</div>
             </div>
-          <div className="RepeatBox">
-            <div className="ButtonAdjust">{repeatCount}</div>
-          </div>
-          <div className="ControlButton" onClick={this.onControl('r-up')}>
-            <RiArrowUpLine className="ButtonAdjust" size="18" />
-          </div>
-          <div className="ControlButton" onClick={this.onControl('r-down')}>
-            <RiArrowDownLine className="ButtonAdjust" size="18" />
-          </div>
+          )}
+
+          { attachTooltip('반복회수 올림',
+            <div className="ControlButton" onClick={this.onControl('r-up')}>
+              <RiArrowUpLine className="ButtonAdjust" size="18" />
+            </div>
+          )}
+
+          { attachTooltip('반복회수 내림',
+            <div className="ControlButton" onClick={this.onControl('r-down')}>
+              <RiArrowDownLine className="ButtonAdjust" size="18" />
+            </div>
+          )}
+
           <div className="ControlSeparator">&nbsp;</div>
-          <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount}`}</div>
+          { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount}`}</div>) }
+
           <div className="ControlSeparator">&nbsp;</div>
-          <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>
+          { attachTooltip('재생상태', <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
+
           <div className="ControlSeparator">&nbsp;</div>
-          <div className="ControlButton" onClick={this.onControl('play/pause')}>
-            { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }
-          </div>
-          <div className="ControlButton" onClick={this.onControl('show')}>
-            { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
-          </div>
-          <div className="ControlButton" onClick={this.onControl('scroll')}>
-            { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
-          </div>
-          <div className="ControlButton" onClick={this.onControl('repeat')}>
-            { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
-          </div>
+          { attachTooltip(playing.running ? '일시중지' : '재생',
+            <div className="ControlButton" onClick={this.onControl('play/pause')}>
+              { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }
+            </div>
+          )}
+
+          { attachTooltip(showScript ? '전체 자막 가리기' : '전체 자막 보이기',
+            <div className="ControlButton" onClick={this.onControl('show')}>
+              { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
+            </div>
+          )}
+
+          { attachTooltip(scrollLock ? '자막 스크롤 고정' : '자막 자동 스크롤',
+            <div className="ControlButton" onClick={this.onControl('scroll')}>
+              { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
+            </div>
+          )}
+
+          { attachTooltip(pauseRepeat ? '현재 자막만 재생' : '다음 자막 자동재생',
+            <div className="ControlButton" onClick={this.onControl('repeat')}>
+              { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
+            </div>
+          )}
+
           <div className="ControlSeparator">&nbsp;</div>
-          <div className="ControlItem">
-            <VolumeControl value={volume} onChange={this.handleVolumeChange} />
-          </div>
+
+          { attachTooltip('음량조절',
+            <div className="ControlItem">
+              <VolumeControl value={volume} onChange={this.handleVolumeChange} />
+            </div>
+          )}
+
         </div>
         <div className="ScriptArea">
           <div ref={this._scriptDiv} className="ScriptScroll">

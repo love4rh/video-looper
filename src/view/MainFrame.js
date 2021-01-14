@@ -18,7 +18,7 @@ import { getScriptMock } from '../mock/scriptMock.js';
 import './styles.scss';
 
 
-const debugOn = true;
+const debugOn = false;
 
 
 class MainFrame extends React.Component {
@@ -48,20 +48,24 @@ class MainFrame extends React.Component {
     this.setState({ waiting: false, message: msg });
   }
 
-  handleStart = (vf, sf) => {
+  handleStart = (type, vf, sf) => {
     // console.log(vf, JSON.stringify(vf)); 
     this.setState({ waiting: true });
 
-    const scriptURL = URL.createObjectURL(sf);
-
-    readTextFile(scriptURL, (text) => {
-      this.setState({
+    readTextFile(sf, (text) => {
+      const newState = {
         waiting: false,
         pageType: 'study',
-        videoFile: vf,
-        scriptFile: sf,
+        videoURL: type === 'local' ? URL.createObjectURL(vf) : vf,
         scriptData: debugOn ? getScriptMock() : srtTool.convert(text.split('\n'))
-      });
+      };
+
+      if( type === 'local' ) {
+        newState.videoFile = vf;
+        newState.scriptFile = sf;
+      }
+
+      this.setState(newState);
     });
   }
 
@@ -72,7 +76,7 @@ class MainFrame extends React.Component {
   }
 
   render() {
-    const { pageType, videoFile, scriptFile, scriptData, waiting, message } = this.state;
+    const { pageType, videoFile, scriptFile, scriptData, waiting, message, videoURL } = this.state;
 
     const toastOn = isvalid(message);
 
@@ -87,7 +91,7 @@ class MainFrame extends React.Component {
         <div className="MainScrollLocked">
           <div className="MainBody">
             { pageType === 'select' && <MovieSelector videoFile={videoFile} scriptFile={scriptFile} onGo={this.handleStart} /> }
-            { pageType === 'study'  && <MovieLooper videoFile={videoFile} scriptData={scriptData} /> }
+            { pageType === 'study'  && <MovieLooper videoURL={videoURL} scriptData={scriptData} /> }
           </div>
         </div>
 

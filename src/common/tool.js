@@ -186,22 +186,17 @@ exports.copyObject = function(obj) {
 
 
 exports.readTextFile = function(file, cb) {
-  const rawFile = new XMLHttpRequest();
+	const reader = new FileReader();
 
-  rawFile.open('GET', file, false);
-  rawFile.onreadystatechange = () => {
-    if( rawFile.readyState === 4 ) {
-      if(rawFile.status === 200 || rawFile.status === 0) {
-        if( cb ) {
-        	cb(rawFile.responseText);
-        }
-      } else if( cb ) {
-      	cb(null);
-      }
-    }
-  }
+  reader.onload = () => {
+		if( cb ) { cb(reader.result); }
+	};
 
-  rawFile.send(null);
+	reader.onerror = () => {
+		if( cb) { cb(null); }
+	}
+
+  reader.readAsText(file);
 }
 
 
