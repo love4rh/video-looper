@@ -29,10 +29,14 @@ class MovieLooper extends Component {
 
     const { scriptData, videoFile } = this.props;
 
-    // options
-    //   repeatCount - 구간 반복 회수. -1: 무한 반복.
-    //   pauseRepeat - repeat이 끝난 후 정지 여부. false이면 다음 스크립트로 이동
-    //   scrollLock - 스크립트 현재 위치 고정 여부. false이면 다음 스크립트로 스크롤
+    const saved = localStorage.getItem('playingOption');
+
+    // repeatCount - 구간 반복 회수. -1: 무한 반복.
+    // pauseRepeat - repeat이 끝난 후 정지 여부. false이면 다음 스크립트로 이동
+    // scrollLock - 스크립트 현재 위치 고정 여부. false이면 다음 스크립트로 스크롤
+    const options = isundef(saved)
+      ? { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false }
+      : JSON.parse(saved);
 
     this.state = {
       videoFile,
@@ -43,7 +47,7 @@ class MovieLooper extends Component {
       duration: '00:00:00.000', // 동영상 전체 시간
       volume: 100,
       playing: { running: false }, // 현재 실행 정보
-      options: { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false }
+      options
     };
 
     this._videoDiv = React.createRef();
@@ -68,6 +72,10 @@ class MovieLooper extends Component {
     }
   }
 
+  keepOptions = () => {
+    localStorage.setItem('playingOption', JSON.stringify(this.state.options));
+  }
+
   procTimeChecker = () => {
     const { playing, scriptData, options } = this.state;
     const { repeatCount, pauseRepeat, scrollLock } = options;
@@ -88,7 +96,6 @@ class MovieLooper extends Component {
           v.play();
         }, 500);
       } else if( !istrue(pauseRepeat) && playing.index < scriptData.length - 1 ) {
-        // this.procScriptLooping(playing.index + 1);
         playing.index = playing.index + 1;
         playing.data = scriptData[playing.index];
         playing.start = playing.data.start;
@@ -99,8 +106,10 @@ class MovieLooper extends Component {
         v.play();
 
         if( !istrue(scrollLock) ) {
-          // TODO fine tunning
-          this._scriptDiv.current.scrollTop = 32 * playing.index; // 32 --> ScriptItem의 높이임.
+          const scDiv = this._scriptDiv.current;
+          const rowHeight = 32; // ScriptItem의 높이임.
+
+          scDiv.scrollTop = Math.max(0, rowHeight * playing.index - (scDiv.clientHeight - rowHeight) / 2);
         }
       } else {
         v.pause();
@@ -185,14 +194,18 @@ class MovieLooper extends Component {
 
     // console.log('onControl', type, JSON.stringify(playing));
 
+    let optUpdate = true;
+
     switch( type ) {
       case 'pause':
         v.pause();
         playing.running = false;
+        optUpdate = false;
         this.setState({ playing: playing });
         break;
 
       case 'play':
+        optUpdate = false;
         if( isundef(playing.index) ) {
           this.procScriptLooping(0);
         } else {
@@ -204,31 +217,32 @@ class MovieLooper extends Component {
 
       case 'show':
         options.showScript = !showScript;
-        this.setState({ options: options });
         break;
 
       case 'scroll':
         options.scrollLock = !scrollLock;
-        this.setState({ options: options });
         break;
 
       case 'repeat':
         options.pauseRepeat = !pauseRepeat;
-        this.setState({ options: options });
         break;
 
       case 'r-up':
         options.repeatCount = Math.min(repeatCount + 1, 20);
-        this.setState({ options: options });
         break;
 
       case 'r-down':
         options.repeatCount = Math.max(repeatCount - 1, 1);
-        this.setState({ options: options });
         break;
 
       default:
+        optUpdate = false;
         break;
+    }
+
+    if( optUpdate ) {
+      this.setState({ options: options });
+      this.keepOptions();
     }
   }
 
@@ -303,7 +317,9 @@ class MovieLooper extends Component {
             <RiArrowDownLine className="ButtonAdjust" size="18" />
           </div>
           <div className="ControlSeparator">&nbsp;</div>
-          <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration} (${nvl(playing.count, -1) + 1}/${repeatCount})`}</div>
+          <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount}`}</div>
+          <div className="ControlSeparator">&nbsp;</div>
+          <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>
           <div className="ControlSeparator">&nbsp;</div>
           <div className="ControlButton" onClick={this.onControl('play/pause')}>
             { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }

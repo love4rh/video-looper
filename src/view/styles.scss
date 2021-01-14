@@ -13,7 +13,7 @@ $controlButtonSize: 36px;
 .MainHeader {
 	height: $headerHeight;
 	width: 100vw;
-	background-color: darkslategrey; // #30404d; firebrick darkslateblue
+	background-color: rgb(30, 31, 28); // #30404d; darkslategrey firebrick darkslateblue
 	color: white;
 	display: flex;
 	flex-direction: row;
@@ -154,6 +154,16 @@ $controlButtonSize: 36px;
 	height: 36px;
 }
 
+.RepeatInfo {
+	display: inline-block;
+	position: relative;
+	top: 3px;
+	margin: 0 5px;
+	color: #b0b1ab;
+	text-align: center;
+	width: 60px;
+}
+
 .PlayingTime {
 	display: inline-block;
 	position: relative;
@@ -161,7 +171,7 @@ $controlButtonSize: 36px;
 	margin: 0 5px;
 	color: #b0b1ab;
 	text-align: center;
-	width: 280px;
+	width: 205px;
 }
 
 .ControlButton {
@@ -188,7 +198,7 @@ $controlButtonSize: 36px;
 
 .ButtonAdjust {
 	position: relative;
-	top: 2px;
+	top: 1px;
 }
 
 .RepeatIcon {

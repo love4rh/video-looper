@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { BsList } from 'react-icons/bs';
+// import { BsList } from 'react-icons/bs';
+import { RiArrowGoBackFill } from 'react-icons/ri';
 
 import Spinner from 'react-bootstrap/Spinner'
 import Toast from 'react-bootstrap/Toast'
@@ -16,6 +17,8 @@ import { getScriptMock } from '../mock/scriptMock.js';
 
 import './styles.scss';
 
+
+const debugOn = true;
 
 
 class MainFrame extends React.Component {
@@ -42,13 +45,11 @@ class MainFrame extends React.Component {
   }
 
   showToastMessage = (msg) => {
-    // console.log('showInstanceMessage', msg);
     this.setState({ waiting: false, message: msg });
   }
 
   handleStart = (vf, sf) => {
     // console.log(vf, JSON.stringify(vf)); 
-    
     this.setState({ waiting: true });
 
     const scriptURL = URL.createObjectURL(sf);
@@ -59,9 +60,15 @@ class MainFrame extends React.Component {
         pageType: 'study',
         videoFile: vf,
         scriptFile: sf,
-        scriptData: srtTool.convert(text.split('\n')) // srtTool.convert(text.split('\n')) // getScriptMock()
+        scriptData: debugOn ? getScriptMock() : srtTool.convert(text.split('\n'))
       });
     });
+  }
+
+  handleClickMenu = (type) => () => {
+    if( 'main' === type ) {
+      this.setState({ pageType: 'select' });
+    }
   }
 
   render() {
@@ -72,8 +79,9 @@ class MainFrame extends React.Component {
   	return (
   		<div className="MainWrap">
         <div className="MainHeader">
-          { <div className="MainMenuButton" onClick={this.handleMenu}><BsList size="28" color="#ffffff" /></div> }
+          { /* <div className="MainMenuButton" onClick={this.handleMenu}><BsList size="28" color="#ffffff" /></div> */ }
           <div className="MainTitle">{'Movie Looper'}</div>
+          { pageType !== 'select' && <div className="MainMenuButton" onClick={this.handleClickMenu('main')}><RiArrowGoBackFill size="24" color="#ffffff"/></div> }
         </div>
 
         <div className="MainScrollLocked">
