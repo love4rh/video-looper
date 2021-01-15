@@ -259,9 +259,35 @@ class MovieLooper extends Component {
     }
   }
 
+  adjustScriptStartTime = (idx, tm) => {
+    const { scriptData } = this.state;
+
+    // 전체 대상
+    if( idx === -1 ) {
+      this.setState({ scriptData: scriptData.map((itm) =>
+        {
+          itm.start += tm;
+          itm.end += tm;
+          return itm;
+        })
+      });
+    } else {
+      scriptData[idx].start += tm;
+      scriptData[idx].end += tm;
+      this.setState({ scriptData: scriptData });
+    }
+  }
+
+  adjustScriptDuratoin = (idx, tm) => {
+    const { scriptData } = this.state;
+
+    scriptData[idx].end += tm;
+    this.setState({ scriptData: scriptData });
+  }
+
   handleKeyDown = (ev) => {
     const { playing, scriptData, volume } = this.state;
-    const { keyCode, shiftKey } = ev;
+    const { keyCode, shiftKey, ctrlKey } = ev;
 
     // console.log('KeyDown', keyCode, ctrlKey, shiftKey);
 
@@ -270,17 +296,36 @@ class MovieLooper extends Component {
         this.onControl('play/pause')();
         break;
 
-      case 37: // left --> previous script
-        this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+      case 37: // left
+        if( shiftKey ) {
+          // 현재 자막 시작 시간 0.5초 감소
+          this.adjustScriptStartTime(playing.index, -0.5);
+        } else if( ctrlKey ) {
+          // 전체 자막 시작 시간 0.5초 감소
+          this.adjustScriptStartTime(-1, -0.5);
+        } else {
+          // previous script
+          this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+        }
         break;
 
-      case 39: // right --> next script
-        this.procScriptLooping( isundef(playing.index) ? 0 : Math.min(scriptData.length - 1, playing.index + 1) );
+      case 39: // right
+        if( shiftKey ) {
+          // 현재 자막 시작 시간 0.5초 증가
+          this.adjustScriptStartTime(playing.index, 0.5);
+        } else if( ctrlKey ) {
+          // 전체 자막 시작 시간 0.5초 증가
+          this.adjustScriptStartTime(-1, 0.5);
+        } else {
+          // next script
+          this.procScriptLooping( isundef(playing.index) ? 0 : Math.min(scriptData.length - 1, playing.index + 1) );
+        }
         break;
 
       case 38: // up
         if( shiftKey ) {
-          // increase repeat count
+          // 현재 자막 유지 시간 0.5초 증가
+          this.adjustScriptDuratoin(playing.index, -0.5);
         } else {
           // volume up
           this.handleVolumeChange( 'updown', Math.min(volume + 5, 100) );
@@ -289,7 +334,8 @@ class MovieLooper extends Component {
 
       case 40: // down
         if( shiftKey ) {
-          // decrease repeat count
+          // 현재 자막 유지 시간 0.5초 감소
+          this.adjustScriptDuratoin(playing.index, 0.5);
         } else {
           // volume down
           this.handleVolumeChange( 'updown', Math.max(volume - 5, 0) );
