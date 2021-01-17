@@ -93,7 +93,11 @@ $controlButtonSize: 36px;
 }
 
 .FormTitle {
-	font-weight: boler;
+	margin-top: 7px;
+}
+
+.CheckLast{
+	margin-top: 10px;
 }
 
 .GoButtonBox {
@@ -218,12 +222,14 @@ $controlButtonSize: 36px;
 	display: inline-block;
 	margin: 2px 2px 2px 0;
 	text-align: center;
-	line-height: 28px;
-	width: 48px;
+	width: 65px;
 	height: $controlButtonSize;
 	color: #b0b1ab;
+	background-color: #42433e;
 	border: 1px solid #b0b1ab;
 	border-radius: 0 5px 5px 0;
+	position: relative;
+	top: 1px;
 }
 
 .ScriptArea {
@@ -283,6 +289,22 @@ $controlButtonSize: 36px;
 .ScriptButton:hover {
 	color: #f8f8f2;
 	border-color: #f8f8f2;
+}
+
+.ScriptTime {
+	flex-basis: 115px;
+	height: 32px;
+	line-height: 30px;
+	overflow: hidden;
+	text-align: right;
+}
+
+.ScriptLength {
+	flex-basis: 60px;
+	height: 32px;
+	line-height: 30px;
+	overflow: hidden;
+	text-align: right;
 }
 
 .VolumeAdjust {

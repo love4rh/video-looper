@@ -229,6 +229,12 @@ exports.secToTime = (sec) => {
 	return pad(h) + ':' + pad(m) + ':' + pad(s) + '.' + pad2(Math.floor(sec * 1000));
 }
 
+// 2.03488 --> 2.035 (ms 단위를 3자리로 고정)
+exports.durationToStr = (sec) => {
+	const s = Math.floor(sec);
+	return s + '.' + pad2(Math.floor((sec - s) * 1000))
+}
+
 var _logger_ = null;
 
 exports.setLogger = function(logger) {

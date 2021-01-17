@@ -1,7 +1,7 @@
-import { removeTags } from '../common/tool.js';
+import { removeTags } from './tool.js';
 
 
-const srtTool = {
+const scriptTool = {
 	isNewItem: (s, idx) => {
 		return '' + idx === s;
 	},
@@ -30,12 +30,12 @@ const srtTool = {
 		for(let i = 0; i < lines.length; ++i) {
 			const s = lines[i].trim();
 
-			if( srtTool.isNewItem(s, idx) ) {
+			if( scriptTool.isNewItem(s, idx) ) {
 				item = { idx, text: '' };
 				idx += 1;
-			} else if( srtTool.isTimeLine(s) ) {
-				item.start = srtTool.parseTime(s, 0);
-				item.end = srtTool.parseTime(s, 17);
+			} else if( scriptTool.isTimeLine(s) ) {
+				item.start = scriptTool.parseTime(s, 0);
+				item.end = scriptTool.parseTime(s, 17);
 			} else if( s === '' && item !== null ) {
 				item.text = removeTags(item.text);
 				ar.push(item);
@@ -59,8 +59,17 @@ const srtTool = {
 		// console.log(ar);
 
 		return ar;
+	},
+
+	isValidScript: (data) => {
+		if( !('script' in data) || !Array.isArray(data.script) ) {
+			return false;
+		}
+
+		const sd = data.script;
+		return sd.length > 0 && ('text' in sd[0]) && ('start' in sd[0]) && ('end' in sd[0]);
 	}
 };
 
-export default srtTool;
-export { srtTool };
+export default scriptTool;
+export { scriptTool };

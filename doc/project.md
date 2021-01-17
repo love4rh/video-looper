@@ -33,3 +33,8 @@ https://react-icons.github.io/react-icons/#/
 ## 절대좌표 구하기
 https://mommoo.tistory.com/85
 
+
+## text --> blob
+https://heropy.blog/2019/02/28/blob/
+
+https://stackoverflow.com/questions/23024460/javascript-i-created-a-blob-from-a-string-how-do-i-get-the-string-back-out

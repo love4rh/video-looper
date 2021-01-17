@@ -1,9 +1,10 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
+import Form from 'react-bootstrap/Form';
+
 import {
-  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiRepeatLine,
-  RiLockLine, RiLockUnlockLine, RiArrowDownLine, RiArrowUpLine
+  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiRepeatLine, RiLockLine, RiLockUnlockLine
 } from 'react-icons/ri';
 
 import { CgPushRight, CgArrowLongRightL } from 'react-icons/cg';
@@ -18,6 +19,9 @@ import { ScriptItem } from '../view/ScriptItem.js';
 import { VolumeControl } from '../view/VolumeControl.js';
 
 import './styles.scss';
+
+// 시작 위치 조정값 (sec)
+const _adjStart = 0.2;
 
 
 const attachTooltip = (tooltip, tag) => {
@@ -99,13 +103,13 @@ class MovieLooper extends Component {
 
     const v = this._videoDiv.current;
 
-    if( v.currentTime + 0.2 >= playing.end ) {
+    if( v.currentTime + _adjStart >= playing.end ) {
       playing.count += 1;
 
       if( playing.count < repeatCount || repeatCount === -1 ) {
         v.pause();
         setTimeout(() => {
-          v.currentTime = Math.max(0, playing.start - 0.2);
+          v.currentTime = Math.max(0, playing.start - _adjStart);
           v.play();
         }, 500);
       } else if( !istrue(pauseRepeat) && playing.index < scriptData.length - 1 ) {
@@ -115,7 +119,7 @@ class MovieLooper extends Component {
         playing.end = playing.data.end;
         playing.count = 0;
 
-        v.currentTime = Math.max(0, playing.start - 0.2);
+        v.currentTime = Math.max(0, playing.start - _adjStart);
         v.play();
 
         if( !istrue(scrollLock) ) {
@@ -144,14 +148,16 @@ class MovieLooper extends Component {
     const sd = scriptData[idx];
     const v = this._videoDiv.current;
 
-    v.currentTime = Math.max(0, sd.start - 0.2);
+    v.currentTime = Math.max(0, sd.start - _adjStart);
 
     this.setState({
       currentTime: v.currentTime,
       playing: { running: true, index: idx, data: sd, start: sd.start, end: sd.end, count: 0 }
     });
 
-    v.play();
+    if( v.paused ) {
+      v.play();
+    }
   }
 
   onLoadedMetadata = (ev) => {
@@ -195,8 +201,17 @@ class MovieLooper extends Component {
     }
   }
 
+  handleRepeatCount = (ev) => {
+    const { options } = this.state; // , scriptData
+
+    options.repeatCount = parseInt(ev.target.value);
+
+    this.setState({ options: options });
+    this.keepOptions();
+  }
+
   onControl = (type) => () => {
-    const { playing, options } = this.state; // , scriptData, options
+    const { playing, options } = this.state; // , scriptData
     const { repeatCount, pauseRepeat, scrollLock, showScript } = options;
 
     const v = this._videoDiv.current;
@@ -205,7 +220,7 @@ class MovieLooper extends Component {
       type = istrue(playing.running) ? 'pause' : 'play';
     }
 
-    // console.log('onControl', type, JSON.stringify(playing));
+    console.log('onControl', type, JSON.stringify(playing));
 
     let optUpdate = true;
 
@@ -223,6 +238,9 @@ class MovieLooper extends Component {
           this.procScriptLooping(0);
         } else {
           playing.running = true;
+          if( Math.abs(playing.data.end - v.currentTime) < 500 ) {
+            v.currentTime = playing.data.start - _adjStart;
+          }
           this.setState({ playing: playing });
           v.play();
         }
@@ -260,6 +278,10 @@ class MovieLooper extends Component {
   }
 
   adjustScriptStartTime = (idx, tm) => {
+    if( isundef(idx) ) {
+      return;
+    }
+
     const { scriptData } = this.state;
 
     // 전체 대상
@@ -275,14 +297,37 @@ class MovieLooper extends Component {
       scriptData[idx].start += tm;
       scriptData[idx].end += tm;
       this.setState({ scriptData: scriptData });
+
+      this.procScriptLooping(idx);
     }
+
+    localStorage.setItem('lastScript', JSON.stringify({ script:scriptData }));
   }
 
   adjustScriptDuratoin = (idx, tm) => {
+    if( isundef(idx) ) {
+      return;
+    }
+
     const { scriptData } = this.state;
 
     scriptData[idx].end += tm;
+
     this.setState({ scriptData: scriptData });
+    this.procScriptLooping(idx);
+
+    localStorage.setItem('lastScript', JSON.stringify({ script:scriptData }));
+  }
+
+  // 파일로 데이터 저장
+  downloadScript = () => {
+    const { scriptData } = this.state;
+
+    const data = new Blob([JSON.stringify({ script: scriptData })], { type: 'text/plain' });
+    const tempLink = document.createElement('a');
+    tempLink.href = URL.createObjectURL(data);
+    tempLink.setAttribute('download', 'script.json');
+    tempLink.click();
   }
 
   handleKeyDown = (ev) => {
@@ -291,65 +336,73 @@ class MovieLooper extends Component {
 
     // console.log('KeyDown', keyCode, ctrlKey, shiftKey);
 
+    let processed = true;
+
     switch( keyCode ) {
       case 32: // space-bar --> play/pause
         this.onControl('play/pause')();
         break;
 
-      case 37: // left
+      case 188: // <
         if( shiftKey ) {
-          // 현재 자막 시작 시간 0.5초 감소
-          this.adjustScriptStartTime(playing.index, -0.5);
-        } else if( ctrlKey ) {
-          // 전체 자막 시작 시간 0.5초 감소
-          this.adjustScriptStartTime(-1, -0.5);
+          // 현재 자막 유지 시간 0.5초 감소
+          this.adjustScriptDuratoin(playing.index, -(ctrlKey ? 0.2 : 0.5));
         } else {
-          // previous script
-          this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+          // 현재 자막 시작 시간 0.5초 감소
+          this.adjustScriptStartTime(playing.index, -(ctrlKey ? 0.2 : 0.5));
         }
         break;
 
-      case 39: // right
+      case 190: // >
         if( shiftKey ) {
+          // 현재 자막 유지 시간 0.5초 증가
+          this.adjustScriptDuratoin(playing.index, (ctrlKey ? 0.2 : 0.5));
+        } else {
           // 현재 자막 시작 시간 0.5초 증가
-          this.adjustScriptStartTime(playing.index, 0.5);
-        } else if( ctrlKey ) {
-          // 전체 자막 시작 시간 0.5초 증가
-          this.adjustScriptStartTime(-1, 0.5);
+          this.adjustScriptStartTime(playing.index, (ctrlKey ? 0.2 : 0.5));
+        }
+        break;
+
+      case 37: // left
+        // volume down
+        this.handleVolumeChange( 'updown', Math.max(volume - 5, 0) );
+        break;
+
+      case 39: // right
+        // volume up
+        this.handleVolumeChange( 'updown', Math.min(volume + 5, 100) );
+        break;
+
+      case 38: // up
+        // previous script
+        this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+        break;
+
+      case 40: // down
+        if( ctrlKey && shiftKey ) {
+          this.downloadScript()
         } else {
           // next script
           this.procScriptLooping( isundef(playing.index) ? 0 : Math.min(scriptData.length - 1, playing.index + 1) );
         }
         break;
 
-      case 38: // up
-        if( shiftKey ) {
-          // 현재 자막 유지 시간 0.5초 증가
-          this.adjustScriptDuratoin(playing.index, -0.5);
-        } else {
-          // volume up
-          this.handleVolumeChange( 'updown', Math.min(volume + 5, 100) );
-        }
-        break;
-
-      case 40: // down
-        if( shiftKey ) {
-          // 현재 자막 유지 시간 0.5초 감소
-          this.adjustScriptDuratoin(playing.index, 0.5);
-        } else {
-          // volume down
-          this.handleVolumeChange( 'updown', Math.max(volume - 5, 0) );
-        }
-        break;
-
       default:
+        processed = false;
         break;
+    }
+
+    if( processed && ev.preventDefault ) {
+      ev.preventDefault();
+      ev.stopPropagation();
     }
   }
 
   render() {
     const { videoURL, resolution, scriptData, playing, options, currentTime, duration, volume } = this.state;
     const { showScript, scrollLock, pauseRepeat, repeatCount } = options;
+
+    const repeatOptions = [-1, 1, 2, 5, 10, 15, 20, 30];
 
     return (
       <div className="MovieViewBox">
@@ -368,25 +421,19 @@ class MovieLooper extends Component {
             <div className="ButtonAdjust"><RiRepeatLine size="16" /></div>
           </div>
           { attachTooltip('반복회수',
-            <div className="RepeatBox">
-              <div className="ButtonAdjust">{repeatCount}</div>
-            </div>
-          )}
-
-          { attachTooltip('반복회수 올림',
-            <div className="ControlButton" onClick={this.onControl('r-up')}>
-              <RiArrowUpLine className="ButtonAdjust" size="18" />
-            </div>
-          )}
-
-          { attachTooltip('반복회수 내림',
-            <div className="ControlButton" onClick={this.onControl('r-down')}>
-              <RiArrowDownLine className="ButtonAdjust" size="18" />
-            </div>
+            <Form.Control
+              as="select"
+              className="RepeatBox"
+              custom
+              value={repeatCount}
+              onChange={this.handleRepeatCount}
+            >
+              { repeatOptions.map((n) => <option key={`ropt-${n}`} value={n}>{n === -1 ? '∞' : n }</option>) }
+            </Form.Control>
           )}
 
           <div className="ControlSeparator">&nbsp;</div>
-          { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount}`}</div>) }
+          { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
 
           <div className="ControlSeparator">&nbsp;</div>
           { attachTooltip('재생상태', <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
@@ -430,7 +477,7 @@ class MovieLooper extends Component {
             { scriptData.map((sd, idx) => {
                 return (
                   <ScriptItem
-                    key={`script-${idx}`}
+                    key={`script-${idx}-${sd.start}-${sd.end}`}
                     index={idx}
                     data={sd}
                     selected={playing.index === idx}

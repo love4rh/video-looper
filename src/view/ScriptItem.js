@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 
 import cn from 'classnames';
 
+import { secToTime, durationToStr } from '../common/tool.js';
+
 import { RiEyeLine, RiEyeOffLine } from 'react-icons/ri';
 
 import './styles.scss';
@@ -45,7 +47,6 @@ class ScriptItem extends Component {
 
   handleClick = () => {
     const { onClick } = this.props;
-
     onClick();
   }
 
@@ -58,6 +59,12 @@ class ScriptItem extends Component {
         <div className="ScriptButton" onClick={this.toggleHide}>{textShown ? <RiEyeOffLine /> : <RiEyeLine />}</div>
 				<div className="ScriptText" onClick={this.handleClick}>
           {'[' + (index + 1) + '] '} {textShown ? data.text : '...'}
+        </div>
+        <div className="ScriptTime">
+          { secToTime(data.start) }
+        </div>
+        <div className="ScriptLength">
+          { durationToStr(data.end - data.start) }
         </div>
 			</div>
     );

@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { isundef, nvl } from '../common/tool.js';
+import { isvalid, isundef, nvl, istrue } from '../common/tool.js';
 
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -11,6 +11,7 @@ import './styles.scss';
 
 class MovieSelector extends Component {
   static propTypes = {
+    canUseLast: PropTypes.bool,
     scriptFile: PropTypes.object,
     videoFile: PropTypes.object,
 
@@ -20,7 +21,7 @@ class MovieSelector extends Component {
   constructor (props) {
     super(props);
 
-    const { scriptFile, videoFile } = this.props;
+    const { scriptFile, videoFile, canUseLast } = this.props;
 
     const scriptURL = null;
     const videoURL = null;
@@ -29,7 +30,8 @@ class MovieSelector extends Component {
     this.state = {
       scriptFile, videoFile,
       scriptURL, videoURL,
-      sourceType
+      sourceType,
+      useLast: istrue(canUseLast)
     };
   }
 
@@ -63,32 +65,41 @@ class MovieSelector extends Component {
     this.setState({ scriptURL: ev.target.value });
   }
 
+  handleCheck = (ev) => {
+    // console.log('handleCheck', ev.target.checked );
+    this.setState({ useLast: ev.target.checked });
+  }
+
   handleGo = () => {
     const { onGo } = this.props;
-    const { sourceType, scriptFile, videoFile, scriptURL, videoURL } = this.state;
+    const { sourceType, scriptFile, videoFile, scriptURL, videoURL, useLast } = this.state;
     
     if( onGo ) {
       if( sourceType === 'local' ) {
-        onGo(sourceType, videoFile, scriptFile);
+        onGo(sourceType, videoFile, useLast ? '$last$' : scriptFile);
       } else {
-        onGo(sourceType, videoURL, scriptURL);
+        onGo(sourceType, videoURL, useLast ? '$last$' : scriptURL);
       }
     }
   }
 
   render() {
-    const { scriptFile, videoFile, scriptURL, videoURL, sourceType } = this.state;
+    const { canUseLast } = this.props;
+    const { scriptFile, videoFile, scriptURL, videoURL, sourceType, useLast } = this.state;
+
+    const canGo = ((sourceType === 'local' && isvalid(videoFile)) || (sourceType === 'url' && isvalid(videoURL)))
+      && (useLast || (sourceType === 'local' && isvalid(scriptFile)) || (sourceType === 'url' && isvalid(scriptFile)));
 
     return (
       <div className="MovieSelectBox" onClick={this.handleClick}>
         <Form className="MovieOptionBox">
           <div className="FileBoxStyle">
-            <Form.Label className="FormTitle">Movie</Form.Label>
+            <Form.Label className="FormTitle">{'Video'}</Form.Label>
             { sourceType === 'local' &&
               <Form.File id="id-file-movie" custom>
                 <Form.File.Input isValid onChange={this.onVideoChanged} accept="video/*" />
                 <Form.File.Label data-browse="...">
-                  { isundef(videoFile) ? 'Input Move File' : videoFile.name }
+                  { isundef(videoFile) ? 'Input Video File' : videoFile.name }
                 </Form.File.Label>
               </Form.File>
             }
@@ -96,7 +107,7 @@ class MovieSelector extends Component {
               <Form.Control
                 id="id-url-movie"
                 type="text"
-                placeholder="Movie URL here..."
+                placeholder="Video URL here..."
                 value={nvl(videoURL, '')}
                 onChange={this.onVideoURLChanged}
               />
@@ -104,9 +115,9 @@ class MovieSelector extends Component {
           </div>
 
           <div className="FileBoxStyle">
-            <Form.Label className="FormTitle">Script</Form.Label>
+            <Form.Label className="FormTitle">{'Script'}</Form.Label>
             { sourceType === 'local' &&
-              <Form.File id="id-file-script" custom>
+              <Form.File id="id-file-script" custom disabled={useLast} >
                 <Form.File.Input isValid onChange={this.onScriptFileChanged} />
                 <Form.File.Label data-browse="...">
                   { isundef(scriptFile) ? 'Input Script File' : scriptFile.name }
@@ -120,13 +131,17 @@ class MovieSelector extends Component {
                 placeholder="Script(SRT) URL here..."
                 value={nvl(scriptURL, '')}
                 onChange={this.onScriptURLChanged}
+                disabled={useLast}
               />
+            }
+            { canUseLast &&
+              <Form.Check className="CheckLast" label="Use Last Script" checked={useLast} onChange={this.handleCheck} />
             }
           </div>
 
           <div className="GoButtonBox">
             <Button
-              disabled={ (sourceType === 'local' && (isundef(scriptFile) || isundef(videoFile))) || (sourceType === 'url' && (isundef(scriptURL) || isundef(videoURL))) }
+              disabled={ !canGo }
               className="GoButton"
               variant="primary"
               onClick={this.handleGo}

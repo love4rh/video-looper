@@ -8,7 +8,7 @@ import Toast from 'react-bootstrap/Toast'
 
 import { isvalid, readTextFile } from '../common/tool.js';
 
-import { srtTool } from '../common/srtTool.js';
+import { scriptTool } from '../common/scriptTool.js';
 
 import { MovieSelector } from '../view/MovieSelector.js';
 import { MovieLooper } from '../view/MovieLooper.js';
@@ -25,6 +25,8 @@ class MainFrame extends React.Component {
 	constructor (props) {
     super(props);
 
+    const lastOne = localStorage.getItem('lastScript');
+
     this.state = {
       pageType: 'select', // select, study
       scriptFile: null,
@@ -32,6 +34,7 @@ class MainFrame extends React.Component {
       videoURL: '',
       videoFile: null,
       message: null,
+      hasLastScript: isvalid(lastOne),
       waiting: false
     };
   }
@@ -48,24 +51,66 @@ class MainFrame extends React.Component {
     this.setState({ waiting: false, message: msg });
   }
 
+  goToStudy = (vUrl, vFile, sData, sFile) => {
+    const newState = {
+      waiting: false,
+      pageType: 'study',
+      videoURL: vUrl,
+      scriptData: sData
+    };
+
+    if( vFile ) {
+      newState.videoFile = vFile;
+    }
+
+    if( sFile ) {
+      newState.scriptFile = sFile;
+    }
+
+    this.setState(newState);
+  }
+
   handleStart = (type, vf, sf) => {
     // console.log(vf, JSON.stringify(vf)); 
     this.setState({ waiting: true });
 
-    readTextFile(sf, (text) => {
-      const newState = {
-        waiting: false,
-        pageType: 'study',
-        videoURL: type === 'local' ? URL.createObjectURL(vf) : vf,
-        scriptData: debugOn ? getScriptMock() : srtTool.convert(text.split('\n'))
-      };
+    if( sf === '$last$' ) {
+      const saved = JSON.parse(localStorage.getItem('lastScript'));
 
       if( type === 'local' ) {
-        newState.videoFile = vf;
-        newState.scriptFile = sf;
+        this.goToStudy(URL.createObjectURL(vf), vf, saved.script, sf);
+      } else {
+        this.goToStudy(vf, null, saved.script, null);
+      }
+      return;
+    }
+
+    readTextFile(sf, (text) => {
+      let scriptData = null;
+
+      if( debugOn ) {
+        scriptData = getScriptMock();
+      } else if( sf.name.endsWith('.json') ) {
+        scriptData = JSON.parse(text);
+        if( scriptTool.isValidScript(scriptData) ) {
+          this.showToastMessage('이 앱에서 사용하는 자막 데이터가 아닙니다.');
+          return;
+        }
+        scriptData = scriptData.script;
+      } else if( sf.name.endsWith('.srt') ) {
+        scriptData = scriptTool.convert(text.split('\n'));
+      } else {
+        this.showToastMessage('지원하지 않는 자막 포맷입니다.');
+        return;
       }
 
-      this.setState(newState);
+      localStorage.setItem('lastScript', JSON.stringify({ script:scriptData }));
+
+      if( type === 'local' ) {
+        this.goToStudy(URL.createObjectURL(vf), vf, scriptData, sf);
+      } else {
+        this.goToStudy(vf, null, scriptData, null);
+      }
     });
   }
 
@@ -76,7 +121,9 @@ class MainFrame extends React.Component {
   }
 
   render() {
-    const { pageType, videoFile, scriptFile, scriptData, waiting, message, videoURL } = this.state;
+    const {
+      pageType, videoFile, scriptFile, scriptData,
+      waiting, message, videoURL, hasLastScript } = this.state;
 
     const toastOn = isvalid(message);
 
@@ -84,14 +131,16 @@ class MainFrame extends React.Component {
   		<div className="MainWrap">
         <div className="MainHeader">
           { /* <div className="MainMenuButton" onClick={this.handleMenu}><BsList size="28" color="#ffffff" /></div> */ }
-          <div className="MainTitle">{'Movie Looper'}</div>
+          <div className="MainTitle">{'Video Repeater'}</div>
           { pageType !== 'select' && <div className="MainMenuButton" onClick={this.handleClickMenu('main')}><RiArrowGoBackFill size="24" color="#ffffff"/></div> }
         </div>
 
         <div className="MainScrollLocked">
           <div className="MainBody">
-            { pageType === 'select' && <MovieSelector videoFile={videoFile} scriptFile={scriptFile} onGo={this.handleStart} /> }
-            { pageType === 'study'  && <MovieLooper videoURL={videoURL} scriptData={scriptData} /> }
+            { pageType === 'select' &&
+              <MovieSelector videoFile={videoFile} scriptFile={scriptFile} canUseLast={hasLastScript} onGo={this.handleStart} />
+            }
+            { pageType === 'study' && <MovieLooper videoURL={videoURL} scriptData={scriptData} /> }
           </div>
         </div>
 

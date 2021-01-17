@@ -1,4 +1,4 @@
-# Movie Looper (for practicing listening)
+# Video Looper (for practicing listening)
 동영상과 자막 파일을 자막 기준으로 편리하게 반복 재생하며 영어(다른 언어) 듣기 연습을 할 수 있는 웹앱
 
 ## Features
