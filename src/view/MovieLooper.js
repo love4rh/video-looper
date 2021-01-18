@@ -221,7 +221,7 @@ class MovieLooper extends Component {
       type = istrue(playing.running) ? 'pause' : 'play';
     }
 
-    console.log('onControl', type, JSON.stringify(playing));
+    // console.log('onControl', type, JSON.stringify(playing));
 
     let optUpdate = true;
 
