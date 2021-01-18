@@ -20,6 +20,7 @@ import { VolumeControl } from '../view/VolumeControl.js';
 
 import './styles.scss';
 
+
 // 시작 위치 조정값 (sec)
 const _adjStart = 0.2;
 
@@ -277,22 +278,20 @@ class MovieLooper extends Component {
     }
   }
 
-  adjustScriptStartTime = (idx, tm) => {
+  adjustScriptStartTime = (idx, tm, all) => {
     if( isundef(idx) ) {
       return;
     }
 
     const { scriptData } = this.state;
 
-    // 전체 대상
-    if( idx === -1 ) {
-      this.setState({ scriptData: scriptData.map((itm) =>
-        {
-          itm.start += tm;
-          itm.end += tm;
-          return itm;
-        })
-      });
+    // idx(포함) 이후 전체 대상
+    if( istrue(all) ) {
+      for(let i = idx; i < scriptData.length; ++i) {
+        scriptData[i].start += tm;
+        scriptData[i].end += tm;
+      }
+      this.setState({ scriptData: scriptData });
     } else {
       scriptData[idx].start += tm;
       scriptData[idx].end += tm;
@@ -319,6 +318,40 @@ class MovieLooper extends Component {
     localStorage.setItem('lastScript', JSON.stringify({ script:scriptData }));
   }
 
+  // idx의 스크립트를 idx - 1 번째 것으로 합치기
+  mergeScriptUp = (idx) => {
+    if( idx <= 0 ) {
+      return;
+    }
+
+    const { scriptData } = this.state;
+
+    const newData = idx === 1 ? [] : scriptData.slice(0, idx - 1);
+
+    const ms = scriptData[idx - 1];
+    const ns = scriptData[idx];
+
+    ms.start = Math.min(ms.start, ns.start);
+    ms.end = Math.max(ms.end, ns.end);
+    ms.text += (' ' + ns.text);
+
+    newData.push(ms);
+
+    // idx 이후 거 추가
+    if( idx < scriptData.length - 1 ) {
+      scriptData.slice(idx + 1).map((d) => {
+        d.index -= 1;
+        newData.push(d);
+        return d;
+      });
+    }
+
+    // console.log('new Script', newData.length, newData);
+    this.setState({ scriptData: newData });
+
+    localStorage.setItem('lastScript', JSON.stringify({ script:newData }));
+  }
+
   // 파일로 데이터 저장
   downloadScript = () => {
     const { scriptData } = this.state;
@@ -343,23 +376,23 @@ class MovieLooper extends Component {
         this.onControl('play/pause')();
         break;
 
-      case 188: // <
+      case 188: // <(,)
         if( shiftKey ) {
           // 현재 자막 유지 시간 0.5초 감소
-          this.adjustScriptDuratoin(playing.index, -(ctrlKey ? 0.2 : 0.5));
+          this.adjustScriptDuratoin(playing.index, -0.5);
         } else {
           // 현재 자막 시작 시간 0.5초 감소
-          this.adjustScriptStartTime(playing.index, -(ctrlKey ? 0.2 : 0.5));
+          this.adjustScriptStartTime(playing.index, -0.5, ctrlKey);
         }
         break;
 
-      case 190: // >
+      case 190: // >(.)
         if( shiftKey ) {
           // 현재 자막 유지 시간 0.5초 증가
-          this.adjustScriptDuratoin(playing.index, (ctrlKey ? 0.2 : 0.5));
+          this.adjustScriptDuratoin(playing.index, 0.5);
         } else {
           // 현재 자막 시작 시간 0.5초 증가
-          this.adjustScriptStartTime(playing.index, (ctrlKey ? 0.2 : 0.5));
+          this.adjustScriptStartTime(playing.index, 0.5, ctrlKey);
         }
         break;
 
@@ -374,8 +407,12 @@ class MovieLooper extends Component {
         break;
 
       case 38: // up
-        // previous script
-        this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+        if( ctrlKey && shiftKey ) {
+          this.mergeScriptUp(playing.index);
+        } else {
+          // previous script
+          this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+        }
         break;
 
       case 40: // down
