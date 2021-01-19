@@ -131,7 +131,7 @@ class VideoSelector extends Component {
       && (useLast || (sourceType === 'local' && isvalid(scriptFile)) || (sourceType === 'url' && isvalid(scriptFile)));
 
     return (
-      <div className="MovieSelectBox" onClick={this.handleClick}>
+      <div className="MovieSelectBox">
         <Form className="MovieOptionBox">
           <div className="FileBoxStyle">
             <Form.Label className="FormTitle">{'Video'}</Form.Label>
