@@ -10,8 +10,8 @@ import { isvalid, readTextFile } from '../common/tool.js';
 
 import { scriptTool } from '../common/scriptTool.js';
 
-import { MovieSelector } from '../view/MovieSelector.js';
-import { MovieLooper } from '../view/MovieLooper.js';
+import { VideoSelector } from './VideoSelector.js';
+import { VideoLooper } from '../view/VideoLooper.js';
 
 import { getScriptMock } from '../mock/scriptMock.js';
 
@@ -78,7 +78,7 @@ class MainFrame extends React.Component {
       const saved = JSON.parse(localStorage.getItem('lastScript'));
 
       if( type === 'local' ) {
-        this.goToStudy(URL.createObjectURL(vf), vf, saved.script, sf);
+        this.goToStudy(URL.createObjectURL(vf), vf, saved.script, null);
       } else {
         this.goToStudy(vf, null, saved.script, null);
       }
@@ -92,7 +92,7 @@ class MainFrame extends React.Component {
         scriptData = getScriptMock();
       } else if( sf.name.endsWith('.json') ) {
         scriptData = JSON.parse(text);
-        if( scriptTool.isValidScript(scriptData) ) {
+        if( !scriptTool.isValidScript(scriptData) ) {
           this.showToastMessage('이 앱에서 사용하는 자막 데이터가 아닙니다.');
           return;
         }
@@ -123,7 +123,8 @@ class MainFrame extends React.Component {
   render() {
     const {
       pageType, videoFile, scriptFile, scriptData,
-      waiting, message, videoURL, hasLastScript } = this.state;
+			waiting, message, videoURL, hasLastScript
+		} = this.state;
 
     const toastOn = isvalid(message);
 
@@ -138,9 +139,9 @@ class MainFrame extends React.Component {
         <div className="MainScrollLocked">
           <div className="MainBody">
             { pageType === 'select' &&
-              <MovieSelector videoFile={videoFile} scriptFile={scriptFile} canUseLast={hasLastScript} onGo={this.handleStart} />
+              <VideoSelector videoFile={videoFile} scriptFile={scriptFile} canUseLast={hasLastScript} onGo={this.handleStart} />
             }
-            { pageType === 'study' && <MovieLooper videoURL={videoURL} scriptData={scriptData} /> }
+            { pageType === 'study' && <VideoLooper videoURL={videoURL} scriptData={scriptData} videoID={isvalid(videoFile) ? videoFile.name : videoURL} /> }
           </div>
         </div>
 

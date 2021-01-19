@@ -15,8 +15,8 @@ import Tooltip from 'react-bootstrap/Tooltip';
 import OverlayTrigger from 'react-bootstrap/OverlayTrigger';
 
 // import { TooltipEx } from '../view/TooltipEx.js';
-import { ScriptItem } from '../view/ScriptItem.js';
-import { VolumeControl } from '../view/VolumeControl.js';
+import { ScriptItem } from './ScriptItem.js';
+import { VolumeControl } from './VolumeControl.js';
 
 import './styles.scss';
 
@@ -37,9 +37,10 @@ const attachTooltip = (tooltip, tag) => {
 }
 
 
-class MovieLooper extends Component {
+class VideoLooper extends Component {
   static propTypes = {
     scriptData: PropTypes.array,
+    videoID: PropTypes.string,
     videoURL: PropTypes.string
   }
 
@@ -531,5 +532,5 @@ class MovieLooper extends Component {
   }
 }
 
-export default MovieLooper;
-export { MovieLooper} ;
+export default VideoLooper;
+export { VideoLooper} ;

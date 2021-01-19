@@ -9,7 +9,7 @@ import Form from 'react-bootstrap/Form';
 import './styles.scss';
 
 
-class MovieSelector extends Component {
+class VideoSelector extends Component {
   static propTypes = {
     canUseLast: PropTypes.bool,
     scriptFile: PropTypes.object,
@@ -35,6 +35,46 @@ class MovieSelector extends Component {
     };
   }
 
+  componentDidMount () {
+    document.addEventListener('dragover', this.handleDragOver);
+    document.addEventListener('drop', this.handleDrop);
+  }
+
+  componentWillUnmount () {
+    document.removeEventListener('dragover', this.handleDragOver);
+    document.removeEventListener('drop', this.handleDrop);
+  }
+
+  handleDragOver = (ev) => {
+    // console.log('DragOver', ev);
+    ev.preventDefault();
+    ev.stopPropagation();
+  }
+
+  handleDrop = (ev) => {
+    console.log('Drop', ev.dataTransfer);
+
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    /*
+    if (ev.dataTransfer.items) {
+      // Use DataTransferItemList interface to access the file(s)
+      for (var i = 0; i < ev.dataTransfer.items.length; i++) {
+        // If dropped items aren't files, reject them
+        if (ev.dataTransfer.items[i].kind === 'file') {
+          var file = ev.dataTransfer.items[i].getAsFile();
+          console.log('... file[' + i + '].name = ' + file.name);
+        }
+      }
+    } else {
+      // Use DataTransfer interface to access the file(s)
+      for (var i = 0; i < ev.dataTransfer.files.length; i++) {
+        console.log('... file[' + i + '].name = ' + ev.dataTransfer.files[i].name);
+      }
+    } // */
+  }
+
   onVideoChanged = (ev) => {
     const $this = ev.target;
     const files = $this.files;
@@ -51,7 +91,7 @@ class MovieSelector extends Component {
     const files = $this.files;
 
     if( files && files.length > 0 ) {
-      this.setState({ scriptFile: files[0] });
+      this.setState({ scriptFile: files[0], useLast: false });
     } else {
       this.setState({ scriptFile: null });
     }
@@ -155,5 +195,5 @@ class MovieSelector extends Component {
   }
 }
 
-export default MovieSelector;
-export { MovieSelector} ;
+export default VideoSelector;
+export { VideoSelector} ;

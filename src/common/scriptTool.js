@@ -62,6 +62,7 @@ const scriptTool = {
 	},
 
 	isValidScript: (data) => {
+
 		if( !('script' in data) || !Array.isArray(data.script) ) {
 			return false;
 		}
