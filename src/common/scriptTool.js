@@ -15,8 +15,8 @@ const scriptTool = {
 	},
 
 	parseTime: (s, start) => {
-		const tm = (s.charCodeAt(start + 0) - 48) * 10 + (s.charCodeAt(start + 1) - 48) * 3600
-			+ (s.charCodeAt(start + 3) - 48) * 10 + (s.charCodeAt(start + 4) - 48) * 60
+		const tm = (s.charCodeAt(start + 0) - 48) * 36000 + (s.charCodeAt(start + 1) - 48) * 3600
+			+ (s.charCodeAt(start + 3) - 48) * 600 + (s.charCodeAt(start + 4) - 48) * 60
 			+ (s.charCodeAt(start + 6) - 48) * 10 + (s.charCodeAt(start + 7) - 48)
 
 		return tm + ((s.charCodeAt(start + 9) - 48) * 100 + (s.charCodeAt(start + 10) - 48) * 10 + (s.charCodeAt(start + 11) - 48)) / 1000;

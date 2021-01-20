@@ -341,7 +341,7 @@ class VideoLooper extends Component {
     // idx 이후 거 추가
     if( idx < scriptData.length - 1 ) {
       scriptData.slice(idx + 1).map((d) => {
-        d.index -= 1;
+        d.idx -= 1;
         newData.push(d);
         return d;
       });
