@@ -379,21 +379,21 @@ class VideoLooper extends Component {
 
       case 188: // <(,)
         if( shiftKey ) {
-          // 현재 자막 유지 시간 0.5초 감소
-          this.adjustScriptDuratoin(playing.index, -0.5);
+          // 현재 자막 유지 시간 0.25초 감소
+          this.adjustScriptDuratoin(playing.index, -0.25);
         } else {
-          // 현재 자막 시작 시간 0.5초 감소
-          this.adjustScriptStartTime(playing.index, -0.5, ctrlKey);
+          // 현재 자막 시작 시간 0.25초 감소
+          this.adjustScriptStartTime(playing.index, -0.25, ctrlKey);
         }
         break;
 
       case 190: // >(.)
         if( shiftKey ) {
           // 현재 자막 유지 시간 0.5초 증가
-          this.adjustScriptDuratoin(playing.index, 0.5);
+          this.adjustScriptDuratoin(playing.index, 0.25);
         } else {
           // 현재 자막 시작 시간 0.5초 증가
-          this.adjustScriptStartTime(playing.index, 0.5, ctrlKey);
+          this.adjustScriptStartTime(playing.index, 0.25, ctrlKey);
         }
         break;
 
