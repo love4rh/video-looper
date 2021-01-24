@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-
 import cn from 'classnames';
 
 import { secToTime, durationToStr } from '../common/tool.js';
@@ -17,7 +16,7 @@ class ScriptItem extends Component {
     data: PropTypes.object,
     selected: PropTypes.bool,
     showAll: PropTypes.bool,
-
+    chained: PropTypes.bool,
     onClick: PropTypes.func
   }
 
@@ -45,17 +44,23 @@ class ScriptItem extends Component {
     this.setState({ textShown: !textShown });
   }
 
-  handleClick = () => {
+  handleClick = (ev) => {
+    const { shiftKey } = ev;
     const { onClick } = this.props;
-    onClick();
+    onClick(shiftKey);
+
+    if( ev.preventDefault ) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
   }
 
   render () {
-		const { data, selected, index } = this.props;
+		const { data, selected, index, chained } = this.props;
     const { textShown } = this.state;
 
     return (
-      <div className={ cn({ 'ScriptItem':true, 'ScriptSelected':selected }) }>
+      <div className={ cn({ 'ScriptItem':true, 'ScriptChained':!selected && chained, 'ScriptSelected':selected }) }>
         <div className="ScriptButton" onClick={this.toggleHide}>{textShown ? <RiEyeOffLine /> : <RiEyeLine />}</div>
 				<div className="ScriptText" onClick={this.handleClick}>
           {'[' + (index + 1) + '] '} {textShown ? data.text : '...'}

@@ -261,14 +261,21 @@ $controlButtonSize: 36px;
 	overflow: hidden;
 	display: flex;
 	flex-flow: row nowrap;
+	border-left: 2px solid #282923;
 }
 
 .ScriptItem:hover {
 	background-color: #30505d;
+	// border-left: 2px solid #30505d;
 }
 
 .ScriptSelected {
-	background-color: #0e889f;
+	// background-color: #0e889f;
+	border-left: 2px solid #0e889f;
+}
+
+.ScriptChained {
+	border-left: 2px solid #30505d;
 }
 
 .ScriptText {

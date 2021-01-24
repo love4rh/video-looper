@@ -58,6 +58,9 @@ class VideoLooper extends Component {
       ? { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false }
       : JSON.parse(saved);
 
+    // 키로 현재 실행 중인 스크립트 내용 show/hide를 쉽게 하기 위한 변수
+    options.revealIndex = -1;
+
     this.state = {
       videoURL: videoURL,
       scriptData,
@@ -105,57 +108,84 @@ class VideoLooper extends Component {
 
     const v = this._videoDiv.current;
 
-    if( v.currentTime + _adjStart >= playing.end ) {
-      playing.count += 1;
-
-      if( playing.count < repeatCount || repeatCount === -1 ) {
-        v.pause();
-        setTimeout(() => {
-          v.currentTime = Math.max(0, playing.start - _adjStart);
-          v.play();
-        }, 500);
-      } else if( !istrue(pauseRepeat) && playing.index < scriptData.length - 1 ) {
+    if( v.currentTime + _adjStart < playing.end ) {
+      if( isvalid(playing.range) && v.currentTime > scriptData[playing.index].end ) {
         playing.index = playing.index + 1;
-        playing.data = scriptData[playing.index];
-        playing.start = playing.data.start;
-        playing.end = playing.data.end;
-        playing.count = 0;
-
-        v.currentTime = Math.max(0, playing.start - _adjStart);
-        v.play();
-
-        if( !istrue(scrollLock) ) {
-          const scDiv = this._scriptDiv.current;
-          const rowHeight = 32; // ScriptItem의 높이임.
-
-          scDiv.scrollTop = Math.max(0, rowHeight * playing.index - (scDiv.clientHeight - rowHeight) / 2);
-        }
-      } else {
-        v.pause();
-        playing.running = false;
-        playing.count = 0;
-
-        // 끝까지 실행한 경우로 playing.index 초기화
-        if( playing.index === scriptData.length - 1 ) {
-          playing.index = null;
-        }
+        this.setState({ playing: playing });
       }
-
-      this.setState({ playing: playing, currentTime: v.currentTime });
+      return;
     }
+
+    playing.count += 1;
+
+    if( playing.count < repeatCount || repeatCount === -1 ) {
+      v.pause();
+      setTimeout(() => {
+        v.currentTime = Math.max(0, playing.start - _adjStart);
+        
+        if( isvalid(playing.range) ) {
+          playing.index = playing.range[0];
+          this.setState({ playing });
+        }
+        v.play();
+      }, 500);
+    } else if( !istrue(pauseRepeat) && playing.index < scriptData.length - 1 ) {
+      const nIdx = isundef(playing.range) ? playing.index + 1 : playing.range[0];
+      const sd = scriptData[nIdx];
+      
+      playing.index = nIdx;
+      playing.start = sd.start;
+      playing.end = sd.end;
+      playing.count = 0;
+
+      v.currentTime = Math.max(0, playing.start - _adjStart);
+      v.play();
+
+      if( !istrue(scrollLock) ) {
+        const scDiv = this._scriptDiv.current;
+        const rowHeight = 32; // ScriptItem의 높이임.
+
+        scDiv.scrollTop = Math.max(0, rowHeight * playing.index - (scDiv.clientHeight - rowHeight) / 2);
+      }
+    } else {
+      v.pause();
+      playing.running = false;
+      playing.count = 0;
+
+      // 끝까지 실행한 경우로 playing.index 초기화
+      if( playing.index === scriptData.length - 1 ) {
+        playing.index = null;
+      }
+    }
+
+    this.setState({ playing: playing, currentTime: v.currentTime });
   }
 
-  procScriptLooping = (idx) => {
-    const { scriptData } = this.state;
-    const sd = scriptData[idx];
+  procScriptLooping = (idx, shiftKey) => {
+    const { scriptData, playing } = this.state;
     const v = this._videoDiv.current;
 
-    v.currentTime = Math.max(0, sd.start - _adjStart);
+    if( isvalid(playing.index) && shiftKey ) {
+      const b = Math.min(playing.index, idx);
+      const e = Math.max(playing.index, idx);
 
-    this.setState({
-      currentTime: v.currentTime,
-      playing: { running: true, index: idx, data: sd, start: sd.start, end: sd.end, count: 0 }
-    });
+      const db = scriptData[b];
+      const de = scriptData[e];
+      v.currentTime = Math.max(0, db.start - _adjStart);
+
+      this.setState({
+        currentTime: v.currentTime,
+        playing: { running: true, index: b, range:[b, e], start: db.start, end: de.end, count: 0 }
+      });
+    } else {
+      const sd = scriptData[idx];
+      v.currentTime = Math.max(0, sd.start - _adjStart);
+      
+      this.setState({
+        currentTime: v.currentTime,
+        playing: { running: true, index: idx, range: null, start: sd.start, end: sd.end, count: 0 }
+      });
+    }
 
     if( v.paused ) {
       v.play();
@@ -175,8 +205,8 @@ class VideoLooper extends Component {
     // console.log('onLoadedMetadata', $this.videoHeight, $this.videoWidth);
   }
 
-  handleScriptClick = (idx) => () => {
-    this.procScriptLooping(idx);
+  handleScriptClick = (idx) => (shiftKey) => {
+    this.procScriptLooping(idx, shiftKey);
   }
 
   handleVideoPlay = () => {
@@ -213,8 +243,8 @@ class VideoLooper extends Component {
   }
 
   onControl = (type) => () => {
-    const { playing, options } = this.state; // , scriptData
-    const { repeatCount, pauseRepeat, scrollLock, showScript } = options;
+    const { scriptData, playing, options } = this.state; // , scriptData
+    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex } = options;
 
     const v = this._videoDiv.current;
 
@@ -240,8 +270,8 @@ class VideoLooper extends Component {
           this.procScriptLooping(0);
         } else {
           playing.running = true;
-          if( Math.abs(playing.data.end - v.currentTime) < 500 ) {
-            v.currentTime = playing.data.start - _adjStart;
+          if( Math.abs(playing.end - v.currentTime) < 500 ) {
+            v.currentTime = scriptData[isundef(playing.range) ? playing.index : playing.range[0]].start - _adjStart;
           }
           this.setState({ playing: playing });
           v.play();
@@ -266,6 +296,10 @@ class VideoLooper extends Component {
 
       case 'r-down':
         options.repeatCount = Math.max(repeatCount - 1, 1);
+        break;
+
+      case 'reveal':
+        options.revealIndex = isvalid(playing.index) && playing.index !== revealIndex ? playing.index : -1;
         break;
 
       default:
@@ -359,6 +393,7 @@ class VideoLooper extends Component {
 
     const data = new Blob([JSON.stringify({ script: scriptData })], { type: 'text/plain' });
     const tempLink = document.createElement('a');
+
     tempLink.href = URL.createObjectURL(data);
     tempLink.setAttribute('download', 'script.json');
     tempLink.click();
@@ -425,6 +460,10 @@ class VideoLooper extends Component {
         }
         break;
 
+      case 83: // s --> show/hide current script
+        this.onControl('reveal')();
+        break;
+
       default:
         processed = false;
         break;
@@ -438,7 +477,7 @@ class VideoLooper extends Component {
 
   render() {
     const { videoURL, resolution, scriptData, playing, options, currentTime, duration, volume } = this.state;
-    const { showScript, scrollLock, pauseRepeat, repeatCount } = options;
+    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex } = options;
 
     const repeatOptions = [-1, 1, 2, 5, 10, 15, 20, 30];
 
@@ -513,13 +552,16 @@ class VideoLooper extends Component {
         <div className="ScriptArea">
           <div ref={this._scriptDiv} className="ScriptScroll">
             { scriptData.map((sd, idx) => {
+                const shown = showScript || revealIndex === idx;
+                if( shown ) console.log(idx, shown);
                 return (
                   <ScriptItem
-                    key={`script-${idx}-${sd.start}-${sd.end}`}
+                    key={`script-${idx}-${sd.start}-${sd.end}-${shown}`}
                     index={idx}
                     data={sd}
                     selected={playing.index === idx}
-                    showAll={showScript}
+                    chained={isvalid(playing.range) && playing.range[0] <= idx && idx <= playing.range[1]}
+                    showAll={shown}
                     onClick={this.handleScriptClick(idx)}
                   />
                 );
