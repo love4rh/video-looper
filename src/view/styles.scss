@@ -125,27 +125,34 @@ $controlButtonSize: 36px;
 .MovieAreaVertical {
 	text-align: center;
 	// flex-basis: 60vh;
+	flex: 1 1 0;
 }
 
 .MovieAreaHorizontal {
 	text-align: center;
-	flex-basis: 40vh;
+	flex: 1 1 0;
 }
-
 
 .MovieDiv {
 	padding: 5px 5px 0 5px;
   max-width: 90vw;
-	max-height: 70vh;
+	max-height: 40vh;
 	outline: none;
+}
+
+.MovieOverlay {
+	position: relative;
+	left: 0px;
+	top: -25%;
+	bottom: 0px;
+	height: 25%;
+	background-color: rgba(0, 0, 0, 0.975);
 }
 
 .ControlArea {
 	flex-basis: 59px;
 	background-color: #42433e;
-	padding-top: 9px;
-	padding-left: 7px;
-	padding-right: 7px;
+	padding: 9px 7px;
 }
 
 .ControlSeparator {
@@ -213,7 +220,7 @@ $controlButtonSize: 36px;
 	width: $controlButtonSize;
 	height: $controlButtonSize;
 	border: 1px solid #b0b1ab;
-	border-radius: 5px 0 0 5px;
+	border-radius: 5px;
 	background-color: #b0b1ab;
 	color: #42433e;
 }
@@ -227,14 +234,16 @@ $controlButtonSize: 36px;
 	color: #b0b1ab;
 	background-color: #42433e;
 	border: 1px solid #b0b1ab;
-	border-radius: 0 5px 5px 0;
+	border-radius: 5px;
 	position: relative;
 	top: 1px;
+	outline: none;
 }
 
 .ScriptArea {
-	color: white;
-	flex: 1 1;
+	color: #b0b1ab;
+	// flex-basis: 60vh;
+	flex: 1 1 0;
 	overflow: hidden;
 	padding: 5px;
 }
@@ -244,17 +253,10 @@ $controlButtonSize: 36px;
 	overflow-y: auto;
 }
 
-.MovieOverlay {
-	color: red;
-	position: relative;
-	left: 0px;
-	top: -220px;
-}
-
 .ScriptItem {
 	height: 32px; // MovieLooper.js에서 scrollTop 조절하는 부분과 값이 같아야 함.
 	line-height: 32px;
-	color: white;
+	color: #b0b1ab;
 	cursor: pointer;
 	background-color: #282923;
 	padding: 0 5px;
@@ -265,12 +267,13 @@ $controlButtonSize: 36px;
 }
 
 .ScriptItem:hover {
-	background-color: #30505d;
-	// border-left: 2px solid #30505d;
+	// background-color: #30505d;
+	// border-bottom: 1px solid #30505d;
+	color: white;
 }
 
 .ScriptSelected {
-	// background-color: #0e889f;
+	background-color: #30505d; // #0e889f;
 	border-left: 2px solid #0e889f;
 }
 
@@ -279,7 +282,7 @@ $controlButtonSize: 36px;
 }
 
 .ScriptText {
-	flex: 1 1;
+	flex: 1 1 0;
 	height: 32px;
 	line-height: 30px;
 	overflow: hidden;

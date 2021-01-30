@@ -4,10 +4,11 @@ import PropTypes from 'prop-types';
 import Form from 'react-bootstrap/Form';
 
 import {
-  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiRepeatLine, RiLockLine, RiLockUnlockLine
+  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiLockLine, RiLockUnlockLine
 } from 'react-icons/ri';
 
-import { CgPushRight, CgArrowLongRightL } from 'react-icons/cg';
+import { CgPushRight, CgArrowLongRightL, CgTranscript } from 'react-icons/cg';
+import { MdTimerOff, MdTimer } from 'react-icons/md';
 
 import { isundef, isvalid, istrue, secToTime, nvl } from '../common/tool.js';
 
@@ -23,9 +24,13 @@ import './styles.scss';
 
 // 시작 위치 조정값 (sec)
 const _adjStart = 0.2;
-
+const toolTipOn = false;
 
 const attachTooltip = (tooltip, tag) => {
+  if( !toolTipOn ) {
+    return tag;
+  }
+
   return (
     <OverlayTrigger
       placement="top"
@@ -60,6 +65,7 @@ class VideoLooper extends Component {
 
     // 키로 현재 실행 중인 스크립트 내용 show/hide를 쉽게 하기 위한 변수
     options.revealIndex = -1;
+    options.showTime = false;
 
     this.state = {
       videoURL: videoURL,
@@ -69,6 +75,7 @@ class VideoLooper extends Component {
       duration: '00:00:00.000', // 동영상 전체 시간
       volume: 100,
       playing: { running: false }, // 현재 실행 정보
+      hideBottom: true, // 아래 자막 표시되는 영역 가리기
       options
     };
 
@@ -243,8 +250,8 @@ class VideoLooper extends Component {
   }
 
   onControl = (type) => () => {
-    const { scriptData, playing, options } = this.state; // , scriptData
-    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex } = options;
+    const { scriptData, playing, options, hideBottom } = this.state; // , scriptData
+    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex, showTime } = options;
 
     const v = this._videoDiv.current;
 
@@ -302,6 +309,13 @@ class VideoLooper extends Component {
         options.revealIndex = isvalid(playing.index) && playing.index !== revealIndex ? playing.index : -1;
         break;
 
+      case 'time':
+        options.showTime = !showTime;
+        break;
+
+      case 'bottom':
+        this.setState({ hideBottom: !hideBottom }); // fall-through
+        // eslint-disable-next-line 
       default:
         optUpdate = false;
         break;
@@ -476,10 +490,10 @@ class VideoLooper extends Component {
   }
 
   render() {
-    const { videoURL, resolution, scriptData, playing, options, currentTime, duration, volume } = this.state;
-    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex } = options;
+    const { videoURL, resolution, scriptData, playing, options, currentTime, duration, volume, hideBottom } = this.state;
+    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime } = options;
 
-    const repeatOptions = [-1, 1, 2, 5, 10, 15, 20, 30];
+    const repeatOptions = [-1, 1, 2, 5, 10, 15, 20, 30, 50, 100];
 
     return (
       <div className="MovieViewBox">
@@ -491,12 +505,15 @@ class VideoLooper extends Component {
             onPlay={this.handleVideoPlay}
             onPause={this.handleVideoPause}
           />
+          { hideBottom && <div className="MovieOverlay">&nbsp;</div> }
         </div>
         <div className="ControlArea">
+          { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
 
-          <div className="RepeatIcon">
-            <div className="ButtonAdjust"><RiRepeatLine size="16" /></div>
-          </div>
+          <div className="ControlSeparator">&nbsp;</div>
+          { attachTooltip('재생상태', <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
+
+          <div className="ControlSeparator">&nbsp;</div>
           { attachTooltip('반복회수',
             <Form.Control
               as="select"
@@ -509,13 +526,6 @@ class VideoLooper extends Component {
             </Form.Control>
           )}
 
-          <div className="ControlSeparator">&nbsp;</div>
-          { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
-
-          <div className="ControlSeparator">&nbsp;</div>
-          { attachTooltip('재생상태', <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
-
-          <div className="ControlSeparator">&nbsp;</div>
           { attachTooltip(playing.running ? '일시중지' : '재생',
             <div className="ControlButton" onClick={this.onControl('play/pause')}>
               { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }
@@ -540,6 +550,12 @@ class VideoLooper extends Component {
             </div>
           )}
 
+          { attachTooltip(showTime ? '스크립트 시간 보기' : '스크립트 시간 닫기',
+            <div className="ControlButton" onClick={this.onControl('time')}>
+              { showTime ? <MdTimer className="ButtonAdjust" size="18" /> : <MdTimerOff className="ButtonAdjust" size="18" /> }
+            </div>
+          )}
+
           <div className="ControlSeparator">&nbsp;</div>
 
           { attachTooltip('음량조절',
@@ -548,7 +564,15 @@ class VideoLooper extends Component {
             </div>
           )}
 
+          <div className="ControlSeparator">&nbsp;</div>
+
+          { attachTooltip(hideBottom ? '화면아래 보이기' : '화면아래 가리기',
+            <div className="ControlButton" onClick={this.onControl('bottom')}>
+              { hideBottom ? <CgTranscript className="ButtonAdjust" size="18" /> : <CgTranscript className="ButtonAdjust" size="18" /> }
+            </div>
+          )}
         </div>
+
         <div className="ScriptArea">
           <div ref={this._scriptDiv} className="ScriptScroll">
             { scriptData.map((sd, idx) => {
@@ -561,7 +585,8 @@ class VideoLooper extends Component {
                     data={sd}
                     selected={playing.index === idx}
                     chained={isvalid(playing.range) && playing.range[0] <= idx && idx <= playing.range[1]}
-                    showAll={shown}
+                    showText={shown}
+                    showTime={showTime}
                     onClick={this.handleScriptClick(idx)}
                   />
                 );
