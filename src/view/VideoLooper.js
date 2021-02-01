@@ -145,7 +145,7 @@ class VideoLooper extends Component {
       if( isvalid(playing.range) && v.currentTime > scriptData[playing.index].end ) {
         playing.index = playing.index + 1;
         this.addStat(playing.index);
-        this.setState({ playing: playing });
+        this.setState({ playing: playing, currentTime: v.currentTime });
       }
       return;
     }
@@ -160,7 +160,7 @@ class VideoLooper extends Component {
         if( isvalid(playing.range) ) {
           playing.index = playing.range[0];
           this.addStat(playing.index);
-          this.setState({ playing });
+          this.setState({ playing, currentTime: v.currentTime });
         }
         v.play();
       }, 500);
