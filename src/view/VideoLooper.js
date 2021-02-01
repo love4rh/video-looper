@@ -76,20 +76,30 @@ class VideoLooper extends Component {
       volume: 100,
       playing: { running: false }, // 현재 실행 정보
       hideBottom: true, // 아래 자막 표시되는 영역 가리기
-      options
+      options,
+      rangingIdx: -1
     };
 
     this._videoDiv = React.createRef();
     this._scriptDiv = React.createRef();
 
     this._playTimeChecker = null;
+
+    // 스크립트 실행 통계
+    this._stat = {};
   }
 
   componentDidMount () {
+    const s = localStorage.getItem('stat');
+    if( isvalid(s) ) {
+      this._stat = JSON.parse(s);
+    }
+
     document.addEventListener('keydown', this.handleKeyDown);
   }
 
   componentWillUnmount () {
+    localStorage.setItem('stat', JSON.stringify(this._stat));
     this.clearChecker();
     document.removeEventListener('keydown', this.handleKeyDown);
   }
@@ -105,6 +115,22 @@ class VideoLooper extends Component {
     localStorage.setItem('playingOption', JSON.stringify(this.state.options));
   }
 
+  addStat = (idx, type) => {
+    if( idx === -1 ) {
+      return;
+    }
+
+    if( idx in this._stat ) {
+      if( 'reveal' === type ) {
+        this._stat[idx].reveal += 1;
+      } else {
+        this._stat[idx].count += 1;
+      }
+    } else {
+      this._stat[idx] = { count: 1, reveal: 0 }; // 재생회수, 자막보기 회수
+    }
+  }
+
   procTimeChecker = () => {
     const { playing, scriptData, options } = this.state;
     const { repeatCount, pauseRepeat, scrollLock } = options;
@@ -118,6 +144,7 @@ class VideoLooper extends Component {
     if( v.currentTime + _adjStart < playing.end ) {
       if( isvalid(playing.range) && v.currentTime > scriptData[playing.index].end ) {
         playing.index = playing.index + 1;
+        this.addStat(playing.index);
         this.setState({ playing: playing });
       }
       return;
@@ -132,6 +159,7 @@ class VideoLooper extends Component {
         
         if( isvalid(playing.range) ) {
           playing.index = playing.range[0];
+          this.addStat(playing.index);
           this.setState({ playing });
         }
         v.play();
@@ -146,13 +174,11 @@ class VideoLooper extends Component {
       playing.count = 0;
 
       v.currentTime = Math.max(0, playing.start - _adjStart);
+      this.addStat(playing.index);
       v.play();
 
       if( !istrue(scrollLock) ) {
-        const scDiv = this._scriptDiv.current;
-        const rowHeight = 32; // ScriptItem의 높이임.
-
-        scDiv.scrollTop = Math.max(0, rowHeight * playing.index - (scDiv.clientHeight - rowHeight) / 2);
+        this.scrollToIndex(playing.index);
       }
     } else {
       v.pause();
@@ -168,28 +194,32 @@ class VideoLooper extends Component {
     this.setState({ playing: playing, currentTime: v.currentTime });
   }
 
-  procScriptLooping = (idx, shiftKey) => {
-    const { scriptData, playing } = this.state;
+  procScriptLooping = (idx, rangeEnd) => {
+    const { scriptData } = this.state;
     const v = this._videoDiv.current;
 
-    if( isvalid(playing.index) && shiftKey ) {
-      const b = Math.min(playing.index, idx);
-      const e = Math.max(playing.index, idx);
+    if( isvalid(rangeEnd) ) {
+      const b = idx;
+      const e = rangeEnd;
 
       const db = scriptData[b];
       const de = scriptData[e];
       v.currentTime = Math.max(0, db.start - _adjStart);
 
+      this.addStat(b);
       this.setState({
         currentTime: v.currentTime,
+        rangingIdx: -1,
         playing: { running: true, index: b, range:[b, e], start: db.start, end: de.end, count: 0 }
       });
     } else {
       const sd = scriptData[idx];
       v.currentTime = Math.max(0, sd.start - _adjStart);
-      
+
+      this.addStat(idx);
       this.setState({
         currentTime: v.currentTime,
+        rangingIdx: -1,
         playing: { running: true, index: idx, range: null, start: sd.start, end: sd.end, count: 0 }
       });
     }
@@ -197,6 +227,13 @@ class VideoLooper extends Component {
     if( v.paused ) {
       v.play();
     }
+  }
+
+  scrollToIndex = (idx) => {
+    const scDiv = this._scriptDiv.current;
+    const rowHeight = 32; // ScriptItem의 높이임.
+
+    scDiv.scrollTop = Math.max(0, rowHeight * idx - (scDiv.clientHeight - rowHeight) / 2);
   }
 
   onLoadedMetadata = (ev) => {
@@ -212,8 +249,21 @@ class VideoLooper extends Component {
     // console.log('onLoadedMetadata', $this.videoHeight, $this.videoWidth);
   }
 
-  handleScriptClick = (idx) => (shiftKey) => {
-    this.procScriptLooping(idx, shiftKey);
+  handleScriptClick = (idx) => (type) => {
+    // TODO 현재 실행 중인 스크립트가 idx라면 play/pause 토글
+    if( 'range' === type ) {
+      const { rangingIdx } = this.state;
+      if( idx === rangingIdx ) {
+        this.setState({ rangingIdx: -1 });
+      } else if( rangingIdx === -1 ) {
+        this.setState({ rangingIdx: idx });
+      } else {
+        this.procScriptLooping(Math.min(idx, rangingIdx), Math.max(idx, rangingIdx));
+      }
+    } else {
+      this.procScriptLooping(idx);
+    }
+    
   }
 
   handleVideoPlay = () => {
@@ -307,6 +357,7 @@ class VideoLooper extends Component {
 
       case 'reveal':
         options.revealIndex = isvalid(playing.index) && playing.index !== revealIndex ? playing.index : -1;
+        this.addStat(options.revealIndex, 'reveal');
         break;
 
       case 'time':
@@ -461,7 +512,9 @@ class VideoLooper extends Component {
           this.mergeScriptUp(playing.index);
         } else {
           // previous script
-          this.procScriptLooping( isundef(playing.index) ? 0 : Math.max(0, playing.index - 1) );
+          const nidx = isundef(playing.index) ? 0 : Math.max(0, playing.index - 1);
+          this.procScriptLooping(nidx);
+          this.scrollToIndex(nidx);
         }
         break;
 
@@ -470,7 +523,9 @@ class VideoLooper extends Component {
           this.downloadScript()
         } else {
           // next script
-          this.procScriptLooping( isundef(playing.index) ? 0 : Math.min(scriptData.length - 1, playing.index + 1) );
+          const nidx = isundef(playing.index) ? 0 : Math.min(scriptData.length - 1, playing.index + 1);
+          this.procScriptLooping(nidx);
+          this.scrollToIndex(nidx);
         }
         break;
 
@@ -490,9 +545,13 @@ class VideoLooper extends Component {
   }
 
   render() {
-    const { videoURL, resolution, scriptData, playing, options, currentTime, duration, volume, hideBottom } = this.state;
+    const {
+      videoURL, resolution, scriptData, playing, options, currentTime, duration, volume, hideBottom, rangingIdx
+    } = this.state;
+
     const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime } = options;
 
+    // 반복회수 선택 옵션
     const repeatOptions = [-1, 1, 2, 5, 10, 15, 20, 30, 50, 100];
 
     return (
@@ -511,7 +570,7 @@ class VideoLooper extends Component {
           { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
 
           <div className="ControlSeparator">&nbsp;</div>
-          { attachTooltip('재생상태', <div className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
+          { attachTooltip('재생상태', <div id={`tm-${currentTime}`} className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
 
           <div className="ControlSeparator">&nbsp;</div>
           { attachTooltip('반복회수',
@@ -577,7 +636,6 @@ class VideoLooper extends Component {
           <div ref={this._scriptDiv} className="ScriptScroll">
             { scriptData.map((sd, idx) => {
                 const shown = showScript || revealIndex === idx;
-                if( shown ) console.log(idx, shown);
                 return (
                   <ScriptItem
                     key={`script-${idx}-${sd.start}-${sd.end}-${shown}`}
@@ -587,6 +645,7 @@ class VideoLooper extends Component {
                     chained={isvalid(playing.range) && playing.range[0] <= idx && idx <= playing.range[1]}
                     showText={shown}
                     showTime={showTime}
+                    ranging={rangingIdx === idx}
                     onClick={this.handleScriptClick(idx)}
                   />
                 );

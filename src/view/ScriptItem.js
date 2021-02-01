@@ -19,6 +19,7 @@ class ScriptItem extends Component {
     showText: PropTypes.bool,
     showTime: PropTypes.bool,
     chained: PropTypes.bool,
+    ranging: PropTypes.bool,
     onClick: PropTypes.func
   }
 
@@ -47,9 +48,9 @@ class ScriptItem extends Component {
   }
 
   handleClick = (ev) => {
-    const { shiftKey } = ev;
     const { onClick } = this.props;
-    onClick(shiftKey);
+
+    onClick('just');
 
     if( ev.preventDefault ) {
       ev.preventDefault();
@@ -58,11 +59,18 @@ class ScriptItem extends Component {
   }
 
   toggleRange = (ev) => {
+    const { onClick } = this.props;
 
+    onClick('range');
+
+    if( ev.preventDefault ) {
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
   }
 
   render () {
-		const { data, selected, index, chained, showTime } = this.props;
+		const { data, selected, index, chained, showTime, ranging } = this.props;
     const { textShown } = this.state;
 
     return (
@@ -73,7 +81,9 @@ class ScriptItem extends Component {
         </div>
         { showTime && <div className="ScriptTime">{ secToTime(data.start) }</div> }
         { showTime && <div className="ScriptLength">{ durationToStr(data.end - data.start) }</div> }
-        <div className="ScriptButton" onClick={this.toggleRange}><SiPurescript /></div>
+        <div className={cn({ 'ScriptButton':true, 'ScriptButtonSelected':ranging })} onClick={this.toggleRange}>
+          <SiPurescript />
+        </div>
 			</div>
     );
   }

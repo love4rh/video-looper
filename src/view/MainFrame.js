@@ -6,7 +6,7 @@ import { RiArrowGoBackFill } from 'react-icons/ri';
 import Spinner from 'react-bootstrap/Spinner'
 import Toast from 'react-bootstrap/Toast'
 
-import { isvalid, readTextFile } from '../common/tool.js';
+import { isvalid, readTextFile, istrue } from '../common/tool.js';
 
 import { scriptTool } from '../common/scriptTool.js';
 
@@ -51,7 +51,7 @@ class MainFrame extends React.Component {
     this.setState({ waiting: false, message: msg });
   }
 
-  goToStudy = (vUrl, vFile, sData, sFile) => {
+  goToStudy = (vUrl, vFile, sData, sFile, islast) => {
     const newState = {
       waiting: false,
       pageType: 'study',
@@ -67,6 +67,10 @@ class MainFrame extends React.Component {
       newState.scriptFile = sFile;
     }
 
+    if( !istrue(islast) ) {
+      localStorage.setItem('stat', '{}');
+    }
+
     this.setState(newState);
   }
 
@@ -78,9 +82,9 @@ class MainFrame extends React.Component {
       const saved = JSON.parse(localStorage.getItem('lastScript'));
 
       if( type === 'local' ) {
-        this.goToStudy(URL.createObjectURL(vf), vf, saved.script, null);
+        this.goToStudy(URL.createObjectURL(vf), vf, saved.script, null, true);
       } else {
-        this.goToStudy(vf, null, saved.script, null);
+        this.goToStudy(vf, null, saved.script, null, true);
       }
       return;
     }
