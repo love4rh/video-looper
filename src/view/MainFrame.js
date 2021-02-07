@@ -51,6 +51,7 @@ class MainFrame extends React.Component {
     this.setState({ waiting: false, message: msg });
   }
 
+  // islast: 마지막 스크립트 사용 여부
   goToStudy = (vUrl, vFile, sData, sFile, islast) => {
     const newState = {
       waiting: false,

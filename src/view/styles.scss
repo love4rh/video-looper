@@ -142,10 +142,8 @@ $controlButtonSize: 36px;
 
 .MovieOverlay {
 	position: relative;
-	left: 0px;
 	top: -25%;
-	bottom: 0px;
-	height: 25%;
+	height: calc(25% - 5px);
 	background-color: rgba(0, 0, 0, 0.975);
 }
 
@@ -275,6 +273,7 @@ $controlButtonSize: 36px;
 .ScriptSelected {
 	background-color: #30505d; // #0e889f;
 	border-left: 2px solid #0e889f;
+	color: white;
 }
 
 .ScriptChained {

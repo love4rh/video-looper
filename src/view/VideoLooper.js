@@ -86,15 +86,20 @@ class VideoLooper extends Component {
     this._playTimeChecker = null;
 
     // 스크립트 실행 통계
-    this._stat = {};
-  }
-
-  componentDidMount () {
     const s = localStorage.getItem('stat');
     if( isvalid(s) ) {
       this._stat = JSON.parse(s);
+      if( s !== '{}' ) {
+        const lastIdx = Number(nvl(localStorage.getItem('lastPlayIndex'), '0'));
+        const sd = scriptData[lastIdx];
+        this.state.playing = { running: false, index: lastIdx, range: null, start: sd.start, end: sd.end, count: 0 }
+      }
+    } else {
+      this._stat = {};
     }
+  }
 
+  componentDidMount () {
     document.addEventListener('keydown', this.handleKeyDown);
   }
 
@@ -129,6 +134,8 @@ class VideoLooper extends Component {
     } else {
       this._stat[idx] = { count: 1, reveal: 0 }; // 재생회수, 자막보기 회수
     }
+
+    localStorage.setItem('lastPlayIndex', idx);
   }
 
   procTimeChecker = () => {
@@ -552,7 +559,15 @@ class VideoLooper extends Component {
     const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime } = options;
 
     // 반복회수 선택 옵션
-    const repeatOptions = [-1, 1, 2, 5, 10, 15, 20, 30, 50, 100];
+    const repeatOptions = [-1, 1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100];
+
+    const vd = this._videoDiv.current;
+    let overlayBox = {};
+    if( isvalid(vd) ) {
+      // const { offsetTop, offsetLeft, clientTop, clientLeft, clientWidth, clientHeight } = vd;
+      const { offsetLeft, clientWidth } = vd;
+      overlayBox = { left:(offsetLeft + 5), width:(clientWidth - 10) };
+    }
 
     return (
       <div className="MovieViewBox">
@@ -564,7 +579,7 @@ class VideoLooper extends Component {
             onPlay={this.handleVideoPlay}
             onPause={this.handleVideoPause}
           />
-          { hideBottom && <div className="MovieOverlay">&nbsp;</div> }
+          { hideBottom && <div className="MovieOverlay" style={overlayBox}>&nbsp;</div> }
         </div>
         <div className="ControlArea">
           { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
