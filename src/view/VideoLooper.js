@@ -100,6 +100,10 @@ class VideoLooper extends Component {
   }
 
   componentDidMount () {
+    const { playing } = this.state;
+    if( playing.index > 0 ) {
+      this.scrollToIndex(playing.index);
+    }
     document.addEventListener('keydown', this.handleKeyDown);
   }
 
@@ -276,7 +280,7 @@ class VideoLooper extends Component {
   handleVideoPlay = () => {
     // console.log('onPlay');
     if( isundef(this._playTimeChecker) ) {
-      this._playTimeChecker = setInterval(this.procTimeChecker, 200);
+      this._playTimeChecker = setInterval(this.procTimeChecker, 100);
     }
   }
 
@@ -475,6 +479,7 @@ class VideoLooper extends Component {
     const { playing, scriptData, volume } = this.state;
     const { keyCode, shiftKey, ctrlKey } = ev;
 
+    const adjTime = 0.15;
     // console.log('KeyDown', keyCode, ctrlKey, shiftKey);
 
     let processed = true;
@@ -486,21 +491,21 @@ class VideoLooper extends Component {
 
       case 188: // <(,)
         if( shiftKey ) {
-          // 현재 자막 유지 시간 0.25초 감소
-          this.adjustScriptDuratoin(playing.index, -0.25);
+          // 현재 자막 유지 시간 adjTime초 감소
+          this.adjustScriptDuratoin(playing.index, -adjTime);
         } else {
-          // 현재 자막 시작 시간 0.25초 감소
-          this.adjustScriptStartTime(playing.index, -0.25, ctrlKey);
+          // 현재 자막 시작 시간 adjTime초 감소
+          this.adjustScriptStartTime(playing.index, -adjTime, ctrlKey);
         }
         break;
 
       case 190: // >(.)
         if( shiftKey ) {
-          // 현재 자막 유지 시간 0.5초 증가
-          this.adjustScriptDuratoin(playing.index, 0.25);
+          // 현재 자막 유지 시간 adjTime초 증가
+          this.adjustScriptDuratoin(playing.index, adjTime);
         } else {
-          // 현재 자막 시작 시간 0.5초 증가
-          this.adjustScriptStartTime(playing.index, 0.25, ctrlKey);
+          // 현재 자막 시작 시간 adjTime초 증가
+          this.adjustScriptStartTime(playing.index, adjTime, ctrlKey);
         }
         break;
 
