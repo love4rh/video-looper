@@ -10,6 +10,8 @@ import {
 import { CgPushRight, CgArrowLongRightL, CgTranscript } from 'react-icons/cg';
 import { MdTimerOff, MdTimer } from 'react-icons/md';
 
+import { BsCircle, BsDashCircle } from 'react-icons/bs';
+
 import { isundef, isvalid, istrue, secToTime, nvl } from '../common/tool.js';
 
 import Tooltip from 'react-bootstrap/Tooltip';
@@ -75,15 +77,19 @@ class VideoLooper extends Component {
       duration: '00:00:00.000', // 동영상 전체 시간
       volume: 100,
       playing: { running: false }, // 현재 실행 정보
-      hideBottom: true, // 아래 자막 표시되는 영역 가리기
+      hideBottom: false, // 아래 자막 표시되는 영역 가리기
+      screenLocked: false, // 화면 기능 잠굼 여부
       options,
       rangingIdx: -1
     };
 
+    this._refVideoBox = React.createRef();
     this._videoDiv = React.createRef();
     this._scriptDiv = React.createRef();
 
     this._playTimeChecker = null;
+
+    this._lockClickCount = 0;
 
     // 스크립트 실행 통계
     const s = localStorage.getItem('stat');
@@ -261,6 +267,10 @@ class VideoLooper extends Component {
   }
 
   handleScriptClick = (idx) => (type) => {
+    if( this.state.screenLocked ) {
+      return;
+    }
+
     // TODO 현재 실행 중인 스크립트가 idx라면 play/pause 토글
     if( 'range' === type ) {
       const { rangingIdx } = this.state;
@@ -278,18 +288,20 @@ class VideoLooper extends Component {
   }
 
   handleVideoPlay = () => {
-    // console.log('onPlay');
     if( isundef(this._playTimeChecker) ) {
       this._playTimeChecker = setInterval(this.procTimeChecker, 100);
     }
   }
 
   handleVideoPause = () => {
-    // console.log('onPause');
     this.clearChecker();
   }
 
   handleVolumeChange = (type, value) => {
+    if( this.state.screenLocked ) {
+      return;
+    }
+
     const v = this._videoDiv.current;
 
     if( 'updown' === type ) {
@@ -302,7 +314,11 @@ class VideoLooper extends Component {
   }
 
   handleRepeatCount = (ev) => {
-    const { options } = this.state; // , scriptData
+    const { options, screenLocked } = this.state; // , scriptData
+
+    if( screenLocked ) {
+      return;
+    }
 
     options.repeatCount = parseInt(ev.target.value);
 
@@ -311,8 +327,12 @@ class VideoLooper extends Component {
   }
 
   onControl = (type) => () => {
-    const { scriptData, playing, options, hideBottom } = this.state; // , scriptData
+    const { scriptData, playing, options, hideBottom, screenLocked } = this.state; // , scriptData
     const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex, showTime } = options;
+
+    if( screenLocked && type !== 'screenLock' ) {
+      return;
+    }
 
     const v = this._videoDiv.current;
 
@@ -373,6 +393,19 @@ class VideoLooper extends Component {
 
       case 'time':
         options.showTime = !showTime;
+        break;
+
+      case 'screenLock':
+        this._lockClickCount += 1;
+        if( this._lockClickCount === 1 ) {
+          setTimeout(() => this._lockClickCount = 0, 2000);
+        }
+
+        if( this._lockClickCount >= 3 ) {
+          this._lockClickCount = 0;
+          this.setState({ screenLocked: !screenLocked });
+        }
+        optUpdate = false;
         break;
 
       case 'bottom':
@@ -476,8 +509,16 @@ class VideoLooper extends Component {
   }
 
   handleKeyDown = (ev) => {
-    const { playing, scriptData, volume } = this.state;
+    const { playing, scriptData, volume, screenLocked } = this.state;
     const { keyCode, shiftKey, ctrlKey } = ev;
+
+    if( screenLocked ) {
+      if( ev.preventDefault ) {
+        ev.preventDefault();
+        ev.stopPropagation();
+      }
+      return;
+    }
 
     const adjTime = 0.15;
     // console.log('KeyDown', keyCode, ctrlKey, shiftKey);
@@ -558,10 +599,17 @@ class VideoLooper extends Component {
 
   render() {
     const {
-      videoURL, resolution, scriptData, playing, options, currentTime, duration, volume, hideBottom, rangingIdx
+      videoURL, scriptData, playing, options, currentTime, duration, volume, hideBottom, rangingIdx, screenLocked
     } = this.state;
 
     const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime } = options;
+
+    const vbox = this._refVideoBox.current;
+    let vHeight = 100;
+
+    if( isvalid(vbox) ) {
+      vHeight = vbox.clientHeight * 0.4;
+    }
 
     // 반복회수 선택 옵션
     const repeatOptions = [-1, 1, 2, 3, 4, 5, 10, 15, 20, 30, 50, 100];
@@ -570,15 +618,19 @@ class VideoLooper extends Component {
     let overlayBox = {};
     if( isvalid(vd) ) {
       // const { offsetTop, offsetLeft, clientTop, clientLeft, clientWidth, clientHeight } = vd;
-      const { offsetLeft, clientWidth } = vd;
-      overlayBox = { left:(offsetLeft + 5), width:(clientWidth - 10) };
+      const oHeight = vHeight * 0.28;
+      overlayBox = {
+        left: (vd.offsetLeft + 5), width: (vd.clientWidth - 10),
+        top: (vd.offsetTop + vd.clientHeight - oHeight), height: oHeight
+      };
     }
 
     return (
-      <div className="MovieViewBox">
-        <div className={resolution.width > resolution.height ? 'MovieAreaHorizontal' : 'MovieAreaVertical'}>
+      <div ref={this._refVideoBox} className="MovieViewBox">
+        <div className="MovieArea" style={{ flexBasis:(vHeight + 10) }}>
           <video ref={this._videoDiv}
             className="MovieDiv"
+            style={{ maxHeight:vHeight }}
             onLoadedMetadata={this.onLoadedMetadata}
             src={videoURL}
             onPlay={this.handleVideoPlay}
@@ -648,6 +700,12 @@ class VideoLooper extends Component {
           { attachTooltip(hideBottom ? '화면아래 보이기' : '화면아래 가리기',
             <div className="ControlButton" onClick={this.onControl('bottom')}>
               { hideBottom ? <CgTranscript className="ButtonAdjust" size="18" /> : <CgTranscript className="ButtonAdjust" size="18" /> }
+            </div>
+          )}
+
+          { attachTooltip(screenLocked ? '기능 열기' : '기능 잠굼',
+            <div className="ControlButton" onClick={this.onControl('screenLock')}>
+              { screenLocked ? <BsDashCircle className="ButtonAdjust" size="18" /> : <BsCircle className="ButtonAdjust" size="18" /> }
             </div>
           )}
         </div>

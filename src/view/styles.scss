@@ -122,28 +122,19 @@ $controlButtonSize: 36px;
 	flex-flow: column nowrap;
 }
 
-.MovieAreaVertical {
+.MovieArea {
 	text-align: center;
-	// flex-basis: 60vh;
-	flex: 1 1 0;
-}
-
-.MovieAreaHorizontal {
-	text-align: center;
-	flex: 1 1 0;
 }
 
 .MovieDiv {
 	padding: 5px 5px 0 5px;
   max-width: 90vw;
-	max-height: 40vh;
+	// max-height: 40vh;
 	outline: none;
 }
 
 .MovieOverlay {
-	position: relative;
-	top: -25%;
-	height: calc(25% - 5px);
+	position: absolute;
 	background-color: rgba(0, 0, 0, 0.975);
 }
 
