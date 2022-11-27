@@ -127,8 +127,8 @@ $controlButtonSize: 36px;
 }
 
 .MovieDiv {
-	padding: 5px 5px 0 5px;
-  max-width: 90vw;
+	// padding: 5px 5px 0 5px;
+  max-width: 100vw;
 	// max-height: 40vh;
 	outline: none;
 }
@@ -218,7 +218,7 @@ $controlButtonSize: 36px;
 	display: inline-block;
 	margin: 2px 2px 2px 0;
 	text-align: center;
-	width: 65px;
+	width: 75px;
 	height: $controlButtonSize;
 	color: #b0b1ab;
 	background-color: #42433e;
@@ -243,7 +243,7 @@ $controlButtonSize: 36px;
 }
 
 .ScriptItem {
-	height: 32px; // MovieLooper.js에서 scrollTop 조절하는 부분과 값이 같아야 함.
+	// height: 32px; // MovieLooper.js에서 scrollTop 조절하는 부분과 값이 같아야 함.
 	line-height: 32px;
 	color: #b0b1ab;
 	cursor: pointer;
@@ -273,9 +273,9 @@ $controlButtonSize: 36px;
 
 .ScriptText {
 	flex: 1 1 0;
-	height: 32px;
+	// height: 32px;
 	line-height: 30px;
-	overflow: hidden;
+	// overflow: hidden;
 }
 
 .ScriptButton {

@@ -143,9 +143,7 @@ class MainFrame extends React.Component {
 
         <div className="MainScrollLocked">
           <div className="MainBody">
-            { pageType === 'select' &&
-              <VideoSelector videoFile={videoFile} scriptFile={scriptFile} canUseLast={hasLastScript} onGo={this.handleStart} />
-            }
+            { pageType === 'select' && <VideoSelector videoFile={videoFile} scriptFile={scriptFile} canUseLast={hasLastScript} onGo={this.handleStart} /> }
             { pageType === 'study' && <VideoLooper videoURL={videoURL} scriptData={scriptData} videoID={isvalid(videoFile) ? videoFile.name : videoURL} /> }
           </div>
         </div>

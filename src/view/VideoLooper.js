@@ -7,9 +7,8 @@ import {
   RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiLockLine, RiLockUnlockLine
 } from 'react-icons/ri';
 
-import { CgPushRight, CgArrowLongRightL, CgTranscript } from 'react-icons/cg';
-import { MdTimerOff, MdTimer } from 'react-icons/md';
-
+import { CgPushRight, CgArrowLongRightL, CgTranscript, CgOptions } from 'react-icons/cg';
+import { MdTimerOff, MdTimer, MdSpeakerNotes, MdSpeakerNotesOff } from 'react-icons/md';
 import { BsCircle, BsDashCircle } from 'react-icons/bs';
 
 import { isundef, isvalid, istrue, secToTime, nvl } from '../common/tool.js';
@@ -58,12 +57,13 @@ class VideoLooper extends Component {
 
     const saved = localStorage.getItem('playingOption');
 
-    // repeatCount - 구간 반복 회수. -1: 무한 반복.
-    // pauseRepeat - repeat이 끝난 후 정지 여부. false이면 다음 스크립트로 이동
-    // scrollLock - 스크립트 현재 위치 고정 여부. false이면 다음 스크립트로 스크롤
-    const options = isundef(saved)
-      ? { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false }
-      : JSON.parse(saved);
+    // repeatCount: 구간 반복 회수. -1: 무한 반복.
+    // pauseRepeat: repeat이 끝난 후 정지 여부. false이면 다음 스크립트로 이동
+    // scrollLock: 스크립트 현재 위치 고정 여부. false이면 다음 스크립트로 스크롤
+    // simpleMenu: 심플 메뉴모드. true이면 필요한 것들만 표시함
+    // speakingTime: 말하기 시간 주기 여부
+    const optionBasic = { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false, simpleMenu: true, speakingTime: true };
+    const options = isundef(saved) ? optionBasic : { ...optionBasic, ...JSON.parse(saved) };
 
     // 키로 현재 실행 중인 스크립트 내용 show/hide를 쉽게 하기 위한 변수
     options.revealIndex = -1;
@@ -150,7 +150,7 @@ class VideoLooper extends Component {
 
   procTimeChecker = () => {
     const { playing, scriptData, options } = this.state;
-    const { repeatCount, pauseRepeat, scrollLock } = options;
+    const { repeatCount, pauseRepeat, scrollLock, speakingTime } = options;
 
     if( isundef(playing) ) {
       return;
@@ -158,28 +158,38 @@ class VideoLooper extends Component {
 
     const v = this._videoDiv.current;
 
+    // playing: range(영역 실행 여부 및 실행 영역), index: 현재 플레이 중인 스크립트 인덱스
+
+    // 현재 실행 중인 스크립트 완료 여부 체크
     if( v.currentTime + _adjStart < playing.end ) {
       if( isvalid(playing.range) && v.currentTime > scriptData[playing.index].end ) {
         playing.index = playing.index + 1;
         this.addStat(playing.index);
         this.setState({ playing: playing, currentTime: v.currentTime });
       }
+      // 완료 전으로 계속 플레이 함.
       return;
     }
 
+    // 현재 스크립트가 완료된 경우임 --> 플레이 카운트 증가
     playing.count += 1;
 
     if( playing.count < repeatCount || repeatCount === -1 ) {
       v.pause();
       setTimeout(() => {
         v.currentTime = Math.max(0, playing.start - _adjStart);
-        
+
         if( isvalid(playing.range) ) {
           playing.index = playing.range[0];
           this.addStat(playing.index);
           this.setState({ playing, currentTime: v.currentTime });
+          v.play();
+        } else if( speakingTime ) {
+          // 단일 스크립트 실행 시 따라 말하기를 위한 시간을 줌
+          setTimeout(() => { v.play() }, (playing.end - playing.start) * 1250);
+        } else {
+          v.play();
         }
-        v.play();
       }, 500);
     } else if( !istrue(pauseRepeat) && playing.index < scriptData.length - 1 ) {
       const nIdx = isundef(playing.range) ? playing.index + 1 : playing.range[0];
@@ -328,7 +338,7 @@ class VideoLooper extends Component {
 
   onControl = (type) => () => {
     const { scriptData, playing, options, hideBottom, screenLocked } = this.state; // , scriptData
-    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex, showTime } = options;
+    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex, showTime, simpleMenu, speakingTime } = options;
 
     if( screenLocked && type !== 'screenLock' ) {
       return;
@@ -395,6 +405,14 @@ class VideoLooper extends Component {
         options.showTime = !showTime;
         break;
 
+      case 'simpleMenu':
+        options.simpleMenu = !simpleMenu;
+        break;
+
+      case 'speaking':
+        options.speakingTime = !speakingTime;
+        break;
+
       case 'screenLock':
         this._lockClickCount += 1;
         if( this._lockClickCount === 1 ) {
@@ -410,6 +428,7 @@ class VideoLooper extends Component {
 
       case 'bottom':
         this.setState({ hideBottom: !hideBottom }); // fall-through
+
         // eslint-disable-next-line 
       default:
         optUpdate = false;
@@ -598,11 +617,8 @@ class VideoLooper extends Component {
   }
 
   render() {
-    const {
-      videoURL, scriptData, playing, options, currentTime, duration, volume, hideBottom, rangingIdx, screenLocked
-    } = this.state;
-
-    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime } = options;
+    const { videoURL, scriptData, playing, options, currentTime, duration, volume, hideBottom, rangingIdx, screenLocked } = this.state;
+    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime, simpleMenu, speakingTime } = options;
 
     const vbox = this._refVideoBox.current;
     let vHeight = 100;
@@ -618,16 +634,16 @@ class VideoLooper extends Component {
     let overlayBox = {};
     if( isvalid(vd) ) {
       // const { offsetTop, offsetLeft, clientTop, clientLeft, clientWidth, clientHeight } = vd;
-      const oHeight = vHeight * 0.28;
+      const oHeight = vHeight * 0.22;
       overlayBox = {
-        left: (vd.offsetLeft + 5), width: (vd.clientWidth - 10),
+        left: (vd.offsetLeft), width: (vd.clientWidth),
         top: (vd.offsetTop + vd.clientHeight - oHeight), height: oHeight
       };
     }
 
     return (
       <div ref={this._refVideoBox} className="MovieViewBox">
-        <div className="MovieArea" style={{ flexBasis:(vHeight + 10) }}>
+        <div className="MovieArea">
           <video ref={this._videoDiv}
             className="MovieDiv"
             style={{ maxHeight:vHeight }}
@@ -641,8 +657,10 @@ class VideoLooper extends Component {
         <div className="ControlArea">
           { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
 
-          <div className="ControlSeparator">&nbsp;</div>
-          { attachTooltip('재생상태', <div id={`tm-${currentTime}`} className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
+          { !simpleMenu && <>
+            <div className="ControlSeparator">&nbsp;</div>
+            { attachTooltip('재생상태', <div id={`tm-${currentTime}`} className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
+          </>}
 
           <div className="ControlSeparator">&nbsp;</div>
           { attachTooltip('반복회수',
@@ -663,49 +681,61 @@ class VideoLooper extends Component {
             </div>
           )}
 
-          { attachTooltip(showScript ? '전체 자막 가리기' : '전체 자막 보이기',
-            <div className="ControlButton" onClick={this.onControl('show')}>
-              { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
-            </div>
-          )}
+          { !simpleMenu && <>
+            { attachTooltip(showScript ? '전체 자막 가리기' : '전체 자막 보이기',
+              <div className="ControlButton" onClick={this.onControl('show')}>
+                { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
+              </div>
+            )}
+            { attachTooltip(scrollLock ? '자막 스크롤 고정' : '자막 자동 스크롤',
+              <div className="ControlButton" onClick={this.onControl('scroll')}>
+                { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
+              </div>
+            )}
 
-          { attachTooltip(scrollLock ? '자막 스크롤 고정' : '자막 자동 스크롤',
-            <div className="ControlButton" onClick={this.onControl('scroll')}>
-              { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
-            </div>
-          )}
+            { attachTooltip(pauseRepeat ? '현재 자막만 재생' : '다음 자막 자동재생',
+              <div className="ControlButton" onClick={this.onControl('repeat')}>
+                { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
+              </div>
+            )}
+            { attachTooltip(showTime ? '스크립트 시간 보기' : '스크립트 시간 닫기',
+              <div className="ControlButton" onClick={this.onControl('time')}>
+                { showTime ? <MdTimer className="ButtonAdjust" size="18" /> : <MdTimerOff className="ButtonAdjust" size="18" /> }
+              </div>
+            )}
 
-          { attachTooltip(pauseRepeat ? '현재 자막만 재생' : '다음 자막 자동재생',
-            <div className="ControlButton" onClick={this.onControl('repeat')}>
-              { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
-            </div>
-          )}
+            <div className="ControlSeparator">&nbsp;</div>
 
-          { attachTooltip(showTime ? '스크립트 시간 보기' : '스크립트 시간 닫기',
-            <div className="ControlButton" onClick={this.onControl('time')}>
-              { showTime ? <MdTimer className="ButtonAdjust" size="18" /> : <MdTimerOff className="ButtonAdjust" size="18" /> }
-            </div>
-          )}
+            { attachTooltip('음량조절',
+              <div className="ControlItem">
+                <VolumeControl value={volume} onChange={this.handleVolumeChange} />
+              </div>
+            )}
 
-          <div className="ControlSeparator">&nbsp;</div>
-
-          { attachTooltip('음량조절',
-            <div className="ControlItem">
-              <VolumeControl value={volume} onChange={this.handleVolumeChange} />
-            </div>
-          )}
-
-          <div className="ControlSeparator">&nbsp;</div>
+            <div className="ControlSeparator">&nbsp;</div>
+          </>}
 
           { attachTooltip(hideBottom ? '화면아래 보이기' : '화면아래 가리기',
             <div className="ControlButton" onClick={this.onControl('bottom')}>
-              { hideBottom ? <CgTranscript className="ButtonAdjust" size="18" /> : <CgTranscript className="ButtonAdjust" size="18" /> }
+              <CgTranscript className="ButtonAdjust" size="18" />
+            </div>
+          )}
+
+          { attachTooltip(speakingTime ? '말하기 시간 없애기' : '말하기 시간 추가',
+            <div className="ControlButton" onClick={this.onControl('speaking')}>
+              { speakingTime ? <MdSpeakerNotes className="ButtonAdjust" size="18" /> : <MdSpeakerNotesOff className="ButtonAdjust" size="18" /> }
             </div>
           )}
 
           { attachTooltip(screenLocked ? '기능 열기' : '기능 잠굼',
             <div className="ControlButton" onClick={this.onControl('screenLock')}>
               { screenLocked ? <BsDashCircle className="ButtonAdjust" size="18" /> : <BsCircle className="ButtonAdjust" size="18" /> }
+            </div>
+          )}
+
+          { attachTooltip(simpleMenu ? '전체 메뉴 보기' : '필수 메뉴만 모기',
+            <div className="ControlButton" onClick={this.onControl('simpleMenu')}>
+              <CgOptions className="ButtonAdjust" size="18" />
             </div>
           )}
         </div>
