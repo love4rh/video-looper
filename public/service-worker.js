@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cache-v2-vr';
+const CACHE_NAME = 'cache-v3-vr';
 
 const FILES_TO_CACHE = [
   'offline.html',

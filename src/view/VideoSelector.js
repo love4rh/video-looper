@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 
-import { isvalid, isundef, nvl, istrue } from '../common/tool.js';
+import { isvalid, isundef, nvl, istrue } from '../common/tool';
 
 import Button from 'react-bootstrap/Button';
 import Form from 'react-bootstrap/Form';
@@ -27,9 +27,13 @@ class VideoSelector extends Component {
     const videoURL = null;
     const sourceType = 'local'; // url 버전은 조금 생각해 봅시다.
 
+    console.log('VideoSelector', videoFile);
+
     this.state = {
-      scriptFile, videoFile,
-      scriptURL, videoURL,
+      scriptFile,
+      videoFile,
+      scriptURL,
+      videoURL,
       sourceType,
       useLast: istrue(canUseLast)
     };
@@ -43,6 +47,14 @@ class VideoSelector extends Component {
   componentWillUnmount () {
     document.removeEventListener('dragover', this.handleDragOver);
     document.removeEventListener('drop', this.handleDrop);
+  }
+
+  static getDerivedStateFromProps(nextProps, prevState) {
+    if( nextProps.videoFile && nextProps.videoFile !== prevState.videoFile ) {
+      return { videoFile: nextProps.videoFile };
+    }
+
+    return null;
   }
 
   handleDragOver = (ev) => {

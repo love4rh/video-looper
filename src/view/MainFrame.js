@@ -13,6 +13,8 @@ import { scriptTool } from '../common/scriptTool.js';
 import { VideoSelector } from './VideoSelector.js';
 import { VideoLooper } from '../view/VideoLooper.js';
 
+import { idbKeyval } from '../common/idbKeyval';
+
 import { getScriptMock } from '../mock/scriptMock.js';
 
 import './styles.scss';
@@ -40,7 +42,12 @@ class MainFrame extends React.Component {
   }
 
   componentDidMount() {
-    //
+    idbKeyval.get('video-file', (vf) => {
+      // console.log('Last Video File:', vf);
+      if( isvalid(vf) ) {
+        this.setState({ videoFile: vf });
+      }
+    });
   }
 
   hideToastShow = () => {
@@ -78,6 +85,8 @@ class MainFrame extends React.Component {
   handleStart = (type, vf, sf) => {
     // console.log(vf, JSON.stringify(vf)); 
     this.setState({ waiting: true });
+
+    idbKeyval.set('video-file', vf);
 
     if( sf === '$last$' ) {
       const saved = JSON.parse(localStorage.getItem('lastScript'));
@@ -132,6 +141,8 @@ class MainFrame extends React.Component {
 		} = this.state;
 
     const toastOn = isvalid(message);
+
+    console.log('render');
 
   	return (
   		<div className="MainWrap">
