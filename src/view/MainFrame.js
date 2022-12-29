@@ -142,8 +142,6 @@ class MainFrame extends React.Component {
 
     const toastOn = isvalid(message);
 
-    console.log('render');
-
   	return (
   		<div className="MainWrap">
         <div className="MainHeader">
@@ -155,6 +153,7 @@ class MainFrame extends React.Component {
         <div className="MainScrollLocked">
           <div className="MainBody">
             { pageType === 'select' && <VideoSelector videoFile={videoFile} scriptFile={scriptFile} canUseLast={hasLastScript} onGo={this.handleStart} /> }
+            { /* TODO 메인 메뉴로 빽했을 때 VideoLooper가 살아 있는 현상이 있음. */ }
             { pageType === 'study' && <VideoLooper videoURL={videoURL} scriptData={scriptData} videoID={isvalid(videoFile) ? videoFile.name : videoURL} /> }
           </div>
         </div>

@@ -62,7 +62,10 @@ class VideoLooper extends Component {
     // scrollLock: 스크립트 현재 위치 고정 여부. false이면 다음 스크립트로 스크롤
     // simpleMenu: 심플 메뉴모드. true이면 필요한 것들만 표시함
     // speakingTime: 말하기 시간 주기 여부
-    const optionBasic = { repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false, simpleMenu: true, speakingTime: true };
+    const optionBasic = {
+      repeatCount: 10, pauseRepeat: false, scrollLock: false, showScript: false, simpleMenu: true, speakingTime: true,
+      hideBottom: false, // 아래 자막 표시되는 영역 가리기
+    };
     const options = isundef(saved) ? optionBasic : { ...optionBasic, ...JSON.parse(saved) };
 
     // 키로 현재 실행 중인 스크립트 내용 show/hide를 쉽게 하기 위한 변수
@@ -77,7 +80,6 @@ class VideoLooper extends Component {
       duration: '00:00:00.000', // 동영상 전체 시간
       volume: 100,
       playing: { running: false }, // 현재 실행 정보
-      hideBottom: false, // 아래 자막 표시되는 영역 가리기
       screenLocked: false, // 화면 기능 잠굼 여부
       options,
       rangingIdx: -1
@@ -91,17 +93,15 @@ class VideoLooper extends Component {
 
     this._lockClickCount = 0;
 
+    const lastIdx = Number(nvl(localStorage.getItem('lastPlayIndex'), '0'));
+    const sd = scriptData[lastIdx];
+    this.state.playing = { running: false, index: lastIdx, range: null, start: sd.start, end: sd.end, count: 0 }
+
     // 스크립트 실행 통계
     const s = localStorage.getItem('stat');
+
     if( isvalid(s) ) {
       this._stat = JSON.parse(s);
-      if( s !== '{}' ) {
-        const lastIdx = Number(nvl(localStorage.getItem('lastPlayIndex'), '0'));
-        const sd = scriptData[lastIdx];
-        this.state.playing = { running: false, index: lastIdx, range: null, start: sd.start, end: sd.end, count: 0 }
-      }
-    } else {
-      this._stat = {};
     }
   }
 
@@ -109,6 +109,8 @@ class VideoLooper extends Component {
     const { playing } = this.state;
     if( playing.index > 0 ) {
       this.scrollToIndex(playing.index);
+      const v = this._videoDiv.current;
+      v.currentTime = playing.start;
     }
     document.addEventListener('keydown', this.handleKeyDown);
   }
@@ -186,7 +188,7 @@ class VideoLooper extends Component {
           v.play();
         } else if( speakingTime ) {
           // 단일 스크립트 실행 시 따라 말하기를 위한 시간을 줌
-          setTimeout(() => { v.play() }, (playing.end - playing.start) * 1250);
+          setTimeout(() => { v.play() }, (playing.end - playing.start) * 1150);
         } else {
           v.play();
         }
@@ -337,8 +339,8 @@ class VideoLooper extends Component {
   }
 
   onControl = (type) => () => {
-    const { scriptData, playing, options, hideBottom, screenLocked } = this.state; // , scriptData
-    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex, showTime, simpleMenu, speakingTime } = options;
+    const { scriptData, playing, options, screenLocked } = this.state; // , scriptData
+    const { repeatCount, pauseRepeat, scrollLock, showScript, revealIndex, showTime, simpleMenu, speakingTime, hideBottom } = options;
 
     if( screenLocked && type !== 'screenLock' ) {
       return;
@@ -427,7 +429,9 @@ class VideoLooper extends Component {
         break;
 
       case 'bottom':
-        this.setState({ hideBottom: !hideBottom }); // fall-through
+        options.hideBottom = !hideBottom;
+        optUpdate = true;
+        break;
 
         // eslint-disable-next-line 
       default:
@@ -617,8 +621,8 @@ class VideoLooper extends Component {
   }
 
   render() {
-    const { videoURL, scriptData, playing, options, currentTime, duration, volume, hideBottom, rangingIdx, screenLocked } = this.state;
-    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime, simpleMenu, speakingTime } = options;
+    const { videoURL, scriptData, playing, options, currentTime, duration, volume, rangingIdx, screenLocked } = this.state;
+    const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime, simpleMenu, speakingTime, hideBottom } = options;
 
     const vbox = this._refVideoBox.current;
     let vHeight = 100;
