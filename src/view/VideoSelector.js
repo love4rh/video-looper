@@ -27,7 +27,7 @@ class VideoSelector extends Component {
     const videoURL = null;
     const sourceType = 'local'; // url 버전은 조금 생각해 봅시다.
 
-    console.log('VideoSelector', videoFile);
+    // console.log('VideoSelector', videoFile);
 
     this.state = {
       scriptFile,
@@ -142,68 +142,74 @@ class VideoSelector extends Component {
     const canGo = ((sourceType === 'local' && isvalid(videoFile)) || (sourceType === 'url' && isvalid(videoURL)))
       && (useLast || (sourceType === 'local' && isvalid(scriptFile)) || (sourceType === 'url' && isvalid(scriptFile)));
 
-    return (
-      <div className="MovieSelectBox">
-        <Form className="MovieOptionBox">
-          <div className="FileBoxStyle">
-            <Form.Label className="FormTitle">{'Video'}</Form.Label>
-            { sourceType === 'local' &&
-              <Form.File id="id-file-movie" custom>
-                <Form.File.Input isValid onChange={this.onVideoChanged} accept="video/*" />
-                <Form.File.Label data-browse="...">
-                  { isundef(videoFile) ? 'Input Video File' : videoFile.name }
-                </Form.File.Label>
-              </Form.File>
-            }
-            { sourceType === 'url' &&
-              <Form.Control
-                id="id-url-movie"
-                type="text"
-                placeholder="Video URL here..."
-                value={nvl(videoURL, '')}
-                onChange={this.onVideoURLChanged}
-              />
-            }
-          </div>
-
-          <div className="FileBoxStyle">
-            <Form.Label className="FormTitle">{'Script'}</Form.Label>
-            { sourceType === 'local' &&
-              <Form.File id="id-file-script" custom disabled={useLast} >
-                <Form.File.Input isValid onChange={this.onScriptFileChanged} />
-                <Form.File.Label data-browse="...">
-                  { isundef(scriptFile) ? 'Input Script File' : scriptFile.name }
-                </Form.File.Label>
-              </Form.File>
-            }
-            { sourceType === 'url' &&
-              <Form.Control
-                id="id-url-script"
-                type="text"
-                placeholder="Script(SRT) URL here..."
-                value={nvl(scriptURL, '')}
-                onChange={this.onScriptURLChanged}
-                disabled={useLast}
-              />
-            }
-            { canUseLast &&
-              <Form.Check className="CheckLast" label="Use Last Script" checked={useLast} onChange={this.handleCheck} />
-            }
-          </div>
-
-          <div className="GoButtonBox">
-            <Button
-              disabled={ !canGo }
-              className="GoButton"
-              variant="primary"
-              onClick={this.handleGo}
-            >
-              Go
-            </Button>
-          </div>
-        </Form>
+    return (<>
+      <div className="MainHeader">
+        <div className="MainTitle">{'Video Repeater'}</div>
       </div>
-    );
+
+      <div className="MainScrollLocked"><div className="MainBody">
+        <div className="MovieSelectBox">
+          <Form className="MovieOptionBox">
+            <div className="FileBoxStyle">
+              <Form.Label className="FormTitle">{'Video'}</Form.Label>
+              { sourceType === 'local' &&
+                <Form.File id="id-file-movie" custom>
+                  <Form.File.Input isValid onChange={this.onVideoChanged} accept="video/*" />
+                  <Form.File.Label data-browse="...">
+                    { isundef(videoFile) ? 'Input Video File' : videoFile.name }
+                  </Form.File.Label>
+                </Form.File>
+              }
+              { sourceType === 'url' &&
+                <Form.Control
+                  id="id-url-movie"
+                  type="text"
+                  placeholder="Video URL here..."
+                  value={nvl(videoURL, '')}
+                  onChange={this.onVideoURLChanged}
+                />
+              }
+            </div>
+
+            <div className="FileBoxStyle">
+              <Form.Label className="FormTitle">{'Script'}</Form.Label>
+              { sourceType === 'local' &&
+                <Form.File id="id-file-script" custom disabled={useLast} >
+                  <Form.File.Input isValid onChange={this.onScriptFileChanged} />
+                  <Form.File.Label data-browse="...">
+                    { isundef(scriptFile) ? 'Input Script File' : scriptFile.name }
+                  </Form.File.Label>
+                </Form.File>
+              }
+              { sourceType === 'url' &&
+                <Form.Control
+                  id="id-url-script"
+                  type="text"
+                  placeholder="Script(SRT) URL here..."
+                  value={nvl(scriptURL, '')}
+                  onChange={this.onScriptURLChanged}
+                  disabled={useLast}
+                />
+              }
+              { canUseLast &&
+                <Form.Check className="CheckLast" label="Use Last Script" checked={useLast} onChange={this.handleCheck} />
+              }
+            </div>
+
+            <div className="GoButtonBox">
+              <Button
+                disabled={ !canGo }
+                className="GoButton"
+                variant="primary"
+                onClick={this.handleGo}
+              >
+                Go
+              </Button>
+            </div>
+          </Form>
+        </div>
+      </div></div>
+    </>);
   }
 }
 

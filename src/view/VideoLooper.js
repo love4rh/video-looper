@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import Form from 'react-bootstrap/Form';
 
 import {
-  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiLockLine, RiLockUnlockLine
+  RiPlayFill, RiPauseFill, RiEyeLine, RiEyeOffLine, RiLockLine, RiLockUnlockLine, RiArrowGoBackFill
 } from 'react-icons/ri';
 
 import { CgPushRight, CgArrowLongRightL, CgTranscript, CgOptions } from 'react-icons/cg';
@@ -620,6 +620,15 @@ class VideoLooper extends Component {
     }
   }
 
+  handleClickMenu = (type) => () => {
+    if( type === 'main' ) {
+      this.onControl('pause');
+      setTimeout(() => {
+        this.props.onGoBack();
+      }, 200);
+    }
+  }
+
   render() {
     const { videoURL, scriptData, playing, options, currentTime, duration, volume, rangingIdx, screenLocked } = this.state;
     const { showScript, scrollLock, pauseRepeat, repeatCount, revealIndex, showTime, simpleMenu, speakingTime, hideBottom } = options;
@@ -636,6 +645,7 @@ class VideoLooper extends Component {
 
     const vd = this._videoDiv.current;
     let overlayBox = {};
+
     if( isvalid(vd) ) {
       // const { offsetTop, offsetLeft, clientTop, clientLeft, clientWidth, clientHeight } = vd;
       const oHeight = vHeight * 0.22;
@@ -645,128 +655,134 @@ class VideoLooper extends Component {
       };
     }
 
-    return (
-      <div ref={this._refVideoBox} className="MovieViewBox">
-        <div className="MovieArea">
-          <video ref={this._videoDiv}
-            className="MovieDiv"
-            style={{ maxHeight:vHeight }}
-            onLoadedMetadata={this.onLoadedMetadata}
-            src={videoURL}
-            onPlay={this.handleVideoPlay}
-            onPause={this.handleVideoPause}
-          />
-          { hideBottom && <div className="MovieOverlay" style={overlayBox}>&nbsp;</div> }
-        </div>
-        <div className="ControlArea">
-          { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
+    return (<>
+      <div className="MainHeader">
+        <div className="MainTitle">{'Video Repeater'}</div>
+        <div className="MainMenuButton" onClick={this.handleClickMenu('main')}><RiArrowGoBackFill size="24" color="#ffffff"/></div>
+      </div>
+      <div className="MainScrollLocked"><div className="MainBody">
+        <div ref={this._refVideoBox} className="MovieViewBox">
+          <div className="MovieArea">
+            <video ref={this._videoDiv}
+              className="MovieDiv"
+              style={{ maxHeight:vHeight }}
+              onLoadedMetadata={this.onLoadedMetadata}
+              src={videoURL}
+              onPlay={this.handleVideoPlay}
+              onPause={this.handleVideoPause}
+            />
+            { hideBottom && <div className="MovieOverlay" style={overlayBox}>&nbsp;</div> }
+          </div>
+          <div className="ControlArea">
+            { attachTooltip('반복상태', <div className="RepeatInfo">{`${nvl(playing.count, -1) + 1} / ${repeatCount === -1 ? '∞' : repeatCount}`}</div>) }
 
-          { !simpleMenu && <>
-            <div className="ControlSeparator">&nbsp;</div>
-            { attachTooltip('재생상태', <div id={`tm-${currentTime}`} className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
-          </>}
-
-          <div className="ControlSeparator">&nbsp;</div>
-          { attachTooltip('반복회수',
-            <Form.Control
-              as="select"
-              className="RepeatBox"
-              custom
-              value={repeatCount}
-              onChange={this.handleRepeatCount}
-            >
-              { repeatOptions.map((n) => <option key={`ropt-${n}`} value={n}>{n === -1 ? '∞' : n }</option>) }
-            </Form.Control>
-          )}
-
-          { attachTooltip(playing.running ? '일시중지' : '재생',
-            <div className="ControlButton" onClick={this.onControl('play/pause')}>
-              { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }
-            </div>
-          )}
-
-          { !simpleMenu && <>
-            { attachTooltip(showScript ? '전체 자막 가리기' : '전체 자막 보이기',
-              <div className="ControlButton" onClick={this.onControl('show')}>
-                { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
-              </div>
-            )}
-            { attachTooltip(scrollLock ? '자막 스크롤 고정' : '자막 자동 스크롤',
-              <div className="ControlButton" onClick={this.onControl('scroll')}>
-                { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
-              </div>
-            )}
-
-            { attachTooltip(pauseRepeat ? '현재 자막만 재생' : '다음 자막 자동재생',
-              <div className="ControlButton" onClick={this.onControl('repeat')}>
-                { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
-              </div>
-            )}
-            { attachTooltip(showTime ? '스크립트 시간 보기' : '스크립트 시간 닫기',
-              <div className="ControlButton" onClick={this.onControl('time')}>
-                { showTime ? <MdTimer className="ButtonAdjust" size="18" /> : <MdTimerOff className="ButtonAdjust" size="18" /> }
-              </div>
-            )}
+            { !simpleMenu && <>
+              <div className="ControlSeparator">&nbsp;</div>
+              { attachTooltip('재생상태', <div id={`tm-${currentTime}`} className="PlayingTime">{`${secToTime(currentTime)} / ${duration}`}</div>) }
+            </>}
 
             <div className="ControlSeparator">&nbsp;</div>
+            { attachTooltip('반복회수',
+              <Form.Control
+                as="select"
+                className="RepeatBox"
+                custom
+                value={repeatCount}
+                onChange={this.handleRepeatCount}
+              >
+                { repeatOptions.map((n) => <option key={`ropt-${n}`} value={n}>{n === -1 ? '∞' : n }</option>) }
+              </Form.Control>
+            )}
 
-            { attachTooltip('음량조절',
-              <div className="ControlItem">
-                <VolumeControl value={volume} onChange={this.handleVolumeChange} />
+            { attachTooltip(playing.running ? '일시중지' : '재생',
+              <div className="ControlButton" onClick={this.onControl('play/pause')}>
+                { playing.running ? <RiPauseFill className="ButtonAdjust" size="16" /> : <RiPlayFill className="ButtonAdjust" size="18" /> }
               </div>
             )}
 
-            <div className="ControlSeparator">&nbsp;</div>
-          </>}
+            { !simpleMenu && <>
+              { attachTooltip(showScript ? '전체 자막 가리기' : '전체 자막 보이기',
+                <div className="ControlButton" onClick={this.onControl('show')}>
+                  { showScript ? <RiEyeOffLine className="ButtonAdjust" size="16" /> : <RiEyeLine className="ButtonAdjust" size="16" /> }
+                </div>
+              )}
+              { attachTooltip(scrollLock ? '자막 스크롤 고정' : '자막 자동 스크롤',
+                <div className="ControlButton" onClick={this.onControl('scroll')}>
+                  { scrollLock ? <RiLockLine className="ButtonAdjust" size="16" /> : <RiLockUnlockLine className="ButtonAdjust" size="16" /> }
+                </div>
+              )}
 
-          { attachTooltip(hideBottom ? '화면아래 보이기' : '화면아래 가리기',
-            <div className="ControlButton" onClick={this.onControl('bottom')}>
-              <CgTranscript className="ButtonAdjust" size="18" />
-            </div>
-          )}
+              { attachTooltip(pauseRepeat ? '현재 자막만 재생' : '다음 자막 자동재생',
+                <div className="ControlButton" onClick={this.onControl('repeat')}>
+                  { pauseRepeat ? <CgPushRight className="ButtonAdjust" size="18" /> : <CgArrowLongRightL className="ButtonAdjust" size="18" /> }
+                </div>
+              )}
+              { attachTooltip(showTime ? '스크립트 시간 보기' : '스크립트 시간 닫기',
+                <div className="ControlButton" onClick={this.onControl('time')}>
+                  { showTime ? <MdTimer className="ButtonAdjust" size="18" /> : <MdTimerOff className="ButtonAdjust" size="18" /> }
+                </div>
+              )}
 
-          { attachTooltip(speakingTime ? '말하기 시간 없애기' : '말하기 시간 추가',
-            <div className="ControlButton" onClick={this.onControl('speaking')}>
-              { speakingTime ? <MdSpeakerNotes className="ButtonAdjust" size="18" /> : <MdSpeakerNotesOff className="ButtonAdjust" size="18" /> }
-            </div>
-          )}
+              <div className="ControlSeparator">&nbsp;</div>
 
-          { attachTooltip(screenLocked ? '기능 열기' : '기능 잠굼',
-            <div className="ControlButton" onClick={this.onControl('screenLock')}>
-              { screenLocked ? <BsDashCircle className="ButtonAdjust" size="18" /> : <BsCircle className="ButtonAdjust" size="18" /> }
-            </div>
-          )}
+              { attachTooltip('음량조절',
+                <div className="ControlItem">
+                  <VolumeControl value={volume} onChange={this.handleVolumeChange} />
+                </div>
+              )}
 
-          { attachTooltip(simpleMenu ? '전체 메뉴 보기' : '필수 메뉴만 모기',
-            <div className="ControlButton" onClick={this.onControl('simpleMenu')}>
-              <CgOptions className="ButtonAdjust" size="18" />
-            </div>
-          )}
-        </div>
+              <div className="ControlSeparator">&nbsp;</div>
+            </>}
 
-        <div className="ScriptArea">
-          <div ref={this._scriptDiv} className="ScriptScroll">
-            { scriptData.map((sd, idx) => {
-                const shown = showScript || revealIndex === idx;
-                return (
-                  <ScriptItem
-                    key={`script-${idx}-${sd.start}-${sd.end}-${shown}`}
-                    index={idx}
-                    data={sd}
-                    selected={playing.index === idx}
-                    chained={isvalid(playing.range) && playing.range[0] <= idx && idx <= playing.range[1]}
-                    showText={shown}
-                    showTime={showTime}
-                    ranging={rangingIdx === idx}
-                    onClick={this.handleScriptClick(idx)}
-                  />
-                );
-              }
+            { attachTooltip(hideBottom ? '화면아래 보이기' : '화면아래 가리기',
+              <div className="ControlButton" onClick={this.onControl('bottom')}>
+                <CgTranscript className="ButtonAdjust" size="18" />
+              </div>
+            )}
+
+            { attachTooltip(speakingTime ? '말하기 시간 없애기' : '말하기 시간 추가',
+              <div className="ControlButton" onClick={this.onControl('speaking')}>
+                { speakingTime ? <MdSpeakerNotes className="ButtonAdjust" size="18" /> : <MdSpeakerNotesOff className="ButtonAdjust" size="18" /> }
+              </div>
+            )}
+
+            { attachTooltip(screenLocked ? '기능 열기' : '기능 잠굼',
+              <div className="ControlButton" onClick={this.onControl('screenLock')}>
+                { screenLocked ? <BsDashCircle className="ButtonAdjust" size="18" /> : <BsCircle className="ButtonAdjust" size="18" /> }
+              </div>
+            )}
+
+            { attachTooltip(simpleMenu ? '전체 메뉴 보기' : '필수 메뉴만 모기',
+              <div className="ControlButton" onClick={this.onControl('simpleMenu')}>
+                <CgOptions className="ButtonAdjust" size="18" />
+              </div>
             )}
           </div>
+
+          <div className="ScriptArea">
+            <div ref={this._scriptDiv} className="ScriptScroll">
+              { scriptData.map((sd, idx) => {
+                  const shown = showScript || revealIndex === idx;
+                  return (
+                    <ScriptItem
+                      key={`script-${idx}-${sd.start}-${sd.end}-${shown}`}
+                      index={idx}
+                      data={sd}
+                      selected={playing.index === idx}
+                      chained={isvalid(playing.range) && playing.range[0] <= idx && idx <= playing.range[1]}
+                      showText={shown}
+                      showTime={showTime}
+                      ranging={rangingIdx === idx}
+                      onClick={this.handleScriptClick(idx)}
+                    />
+                  );
+                }
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-    );
+      </div></div>
+    </>);
   }
 }
 
